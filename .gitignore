@@ -1,0 +1,20 @@
+# 排除本地插件資料夾
+.terraform/
+
+# 排除變數檔 (內含敏感資訊)
+*.tfvars
+*.tfvars.json
+
+# 排除本地狀態檔
+*.tfstate
+*.tfstate.*
+
+# 排除 Crash 產生的救援檔
+errored.tfstate
+
+# 排除執行計畫
+*.tfplan
+plan.out
+
+# Mac 系統檔
+.DS_Store
