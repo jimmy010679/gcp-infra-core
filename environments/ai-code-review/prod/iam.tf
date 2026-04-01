@@ -1,7 +1,7 @@
 # 1. 先從 GCP 撈取該 Service Account 的即時資料
-data "google_service_account" "github_sa" {
+data "google_service_account" "ai_reviewer_sa" {
   # 這裡的 account_id 必須跟你在 global/wif.tf 定義的一模一樣
-  account_id = "tf-github-deployer"
+  account_id = "tf-github-ai-reviewer"
   project    = var.project_id
 }
 
@@ -12,9 +12,10 @@ resource "google_project_iam_member" "sa_roles" {
     "roles/artifactregistry.writer", # 僅限此專案的 GAR 權限
     "roles/iam.serviceAccountUser"
   ])
+  
   project = var.project_id
   role    = each.key
 
-  # 引用方式，不手動拼湊字串
-  member  = "serviceAccount:${data.google_service_account.github_sa.email}"
+  # 引用新 Data Source 的 email
+  member  = "serviceAccount:${data.google_service_account.ai_reviewer_sa.email}"
 }
