@@ -4,11 +4,11 @@
 
 ## 專案架構
 
-本專案採用分層式的 Terraform 架構，將全域資源與環境特定資源分開管理：
+本專案採用分層式的 Terraform 架構，旨在支援**多專案、多環境**的靈活管理：
 
-*   **Global (`/global`)**: 管理跨環境的共用資源，如 Workload Identity Federation (WIF) 與 Service Accounts。
-*   **Environments (`/environments`)**: 管理特定環境（如 `prod`）的應用程式資源。
-*   **Modules (`/modules`)**: 存放可重複使用的 Terraform 模組，例如 Cloud Run 部署與網路配置。
+*   **Global (`/global`)**: 管理跨環境的共用資源，特別是針對各個應用專案（如 AI Code Review）配置獨立的 Workload Identity Federation (WIF) 與專屬 Service Accounts，確保身分驗證的最小權限原則。
+*   **Environments (`/environments`)**: 根據應用專案分類（如 `ai-code-review/`），並依環境（如 `prod/`）管理特定資源。
+*   **Modules (`/modules`)**: 存放可重複使用的 Terraform 模組，供不同應用程式調用。
 
 ### 核心組件
 
@@ -55,9 +55,11 @@
 2.  初始化並套用變更：
     ```bash
     terraform init
-    terraform apply -var="project_id_ai_reviewer=YOUR_PROJECT_ID"
+    terraform apply \
+      -var="ai_code_review_project_id=YOUR_PROJECT_ID" \
+      -var="ai_code_review_github_repo=YOUR_GITHUB_REPO"
     ```
-    *注意：此步驟會建立 WIF Pool 與 Provider，並綁定指定的 GitHub Repository (`jimmy010679/ai-code-review`)。*
+    *注意：此步驟會建立專屬的 WIF Pool 與 Provider，並根據提供的 GitHub Repository 建立對應的 Service Account (`tf-github-ai-reviewer`)。此架構支援多專案擴展，各專案擁有獨立的身份識別與權限。*
 
 ### 部署生產環境資源
 
@@ -68,9 +70,9 @@
 2.  初始化並套用變更：
     ```bash
     terraform init
-    terraform apply
+    terraform apply -var="project_id=YOUR_PROJECT_ID"
     ```
-    *初始部署時，Cloud Run 會使用預設的 `hello` 映像檔。後續將由 CI/CD 流水線更新為實際的應用程式映像檔。*
+    *在此階段，環境層會透過 Data Source 動態取得 Global 層建立的 Service Account 並授予部署所需的權限。*
 
 ---
 
@@ -79,7 +81,7 @@
 本專案配置了 WIF 以支援安全部署。在 GitHub Actions 的 Workflow 中，您需要提供以下資訊：
 
 *   **Workload Identity Provider**: `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-pool-tf/providers/github-provider-tf`
-*   **Service Account**: `tf-github-deployer@<PROJECT_ID>.iam.gserviceaccount.com`
+*   **Service Account**: `tf-github-ai-reviewer@<PROJECT_ID>.iam.gserviceaccount.com`
 
 ### 部署邏輯說明
 
