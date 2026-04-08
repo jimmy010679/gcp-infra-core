@@ -1,0 +1,3 @@
+test_k8s_app_project_id = "test-k8s-app-492717"
+test_k8s_app_app_name   = "test-k8s-app"
+region                  = "asia-east1"

@@ -31,7 +31,7 @@ resource "google_iam_workload_identity_pool_provider" "new_github_provider" {
   }
 
   # 安全約束：只允許你指定的 Repo 存取
-  attribute_condition = "assertion.repository in ['jimmy010679/ai-code-review', 'jimmy010679/gcp-infra-core']"
+  attribute_condition = "assertion.repository in ${jsonencode(var.authorized_repositories)}"
 }
 
 # ====================================================================================
@@ -61,13 +61,24 @@ resource "google_service_account_iam_member" "binding_infra_core" {
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/gcp-infra-core"
 }
 
-# 授予 專案 操作權限
+# 授予 服務帳號 操作權限
 resource "google_project_iam_member" "sa_roles" {
   for_each = toset([
     "roles/run.admin",
     "roles/artifactregistry.admin",
     "roles/iam.serviceAccountUser",
     "roles/browser"
+  ])
+  project = var.ai_code_review_project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.sa_ai_reviewer.email}"
+}
+
+# 授予 服務帳號 GKE 部署權限
+resource "google_project_iam_member" "sa_k8s_roles" {
+  for_each = toset([
+    "roles/container.developer", # 允许部署 K8s 资源
+    "roles/container.clusterViewer" # 允许查看集群狀態
   ])
   project = var.ai_code_review_project_id
   role    = each.key
