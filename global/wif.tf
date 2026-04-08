@@ -58,7 +58,18 @@ resource "google_service_account_iam_member" "binding_ai_reviewer" {
 resource "google_service_account_iam_member" "binding_infra_core" {
   service_account_id = google_service_account.sa_ai_reviewer.name
   role               = "roles/iam.workloadIdentityUser"
+
+  # 注意後方的 Repo 名稱路徑必須精確匹配
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/gcp-infra-core"
+}
+
+# 建立 test-k8s-app 綁定 GitHub 信任關係
+resource "google_service_account_iam_member" "binding_test_k8s_app" {
+  service_account_id = google_service_account.sa_ai_reviewer.name
+  role               = "roles/iam.workloadIdentityUser"
+
+  # 注意後方的 Repo 名稱路徑必須精確匹配
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/test-k8s-app"
 }
 
 # 授予 服務帳號 操作權限
