@@ -1,9 +1,9 @@
 # 排除本地插件資料夾
 .terraform/
 
-# 排除變數檔 (內含敏感資訊)
-*.tfvars
-*.tfvars.json
+# 除了 secret.tfvars (如 API Key, 資料庫密碼)，其他上git，存放不敏感變數追蹤變化
+# *.tfvars
+secret.tfvars      # 專門用來放真正不能公開的秘密 (如 API Key)
 
 # 排除本地狀態檔
 *.tfstate

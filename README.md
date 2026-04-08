@@ -60,8 +60,5 @@
 
 | 類型 | 變數名稱 | 說明 |
 | :--- | :--- | :--- |
-| **Variables** | `GCP_AI_CODE_REVIEW_PROJECT_ID` | 目標 GCP 專案 ID |
-| **Variables** | `GCP_AI_CODE_REVIEW_APP_NAME` | 目標 GCP ai-code-review 名稱 |
 | **Variables** | `GCP_WIF_PROVIDER` | WIF Provider 完整路徑 |
-| **Variables** | `GCP_REGION` | 部署區域 (如 `asia-east1`) |
 | **Secrets**   | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
