@@ -42,27 +42,6 @@ jobs:
         workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
         service_account: '${{ vars.GCP_SERVICE_ACCOUNT }}'
 
-    - name: 'Check Identity'
-      env:
-        TARGET_PROJECT: "gen-lang-client-0643862017"
-      run: |
-        echo "=== 使用 WIF 憑證登入 gcloud ==="
-        # 使用 WIF 專用的登入方式
-        gcloud auth login --cred-file=${{ steps.auth.outputs.credentials_file_path }}
-        
-        echo "=== 目前登入帳戶 ==="
-        gcloud auth list
-        
-        echo "=== 檢查在目標專案中的權限 ==="
-        CURRENT_SA=$(gcloud config get-value account)
-        echo "偵測到身分: $CURRENT_SA"
-        
-        # 這裡會顯示該 SA 在 AI 專案中擁有的所有角色
-        gcloud projects get-iam-policy $TARGET_PROJECT \
-          --flatten="bindings[].members" \
-          --filter="members:$CURRENT_SA" \
-          --format="table(bindings.role)"
-
     # 2. 安裝 Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
