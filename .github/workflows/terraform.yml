@@ -1,0 +1,85 @@
+name: 'Terraform Infrastructure'
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  id-token: write # WIF 必備權限
+  pull-requests: write # 允許在 PR 下方留言（寫入評論）的關鍵權限
+
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    
+    # 這裡可以根據你的目錄結構設定工作目錄
+    defaults:
+      run:
+        working-directory: ./environments/ai-code-review/prod
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # 1. 透過 WIF 認證到 GCP
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
+        service_account: '${{ vars.GCP_SERVICE_ACCOUNT }}'
+
+    # 2. 安裝 Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    # 3. Terraform Init
+    - name: Terraform Init
+      run: terraform init
+
+    # 4. Terraform Plan
+    - name: Terraform Plan
+      id: plan # 設定 ID 以便後續步驟引用輸出
+      run: terraform plan -no-color -input=false
+      continue-on-error: true # 即使 plan 有錯也繼續，方便我們把錯誤訊息貼到留言
+
+    # 4. Terraform Plan
+    - name: Terraform Plan
+      id: plan # 設定 ID 以便後續步驟引用輸出
+      run: terraform plan -no-color -input=false -out=tfplan # 同時輸出 plan 檔案 (機器用) 且不帶顏色 (人看/腳本用)
+      continue-on-error: true # 即使 plan 有錯也繼續，方便我們把錯誤訊息貼到留言
+
+    # 5. 使用腳本將結果貼回 PR (僅在 PR 時觸發)
+    - name: Update Pull Request
+      uses: actions/github-script@v7
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `#### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+          
+          <details><summary>顯示詳細 Plan 內容</summary>
+          
+          \`\`\`terraform
+          ${{ steps.plan.outputs.stdout }}
+          \`\`\`
+          
+          </details>
+          
+          *執行者: @${{ github.actor }}, 工作流: \`${{ github.workflow }}\`*`;
+            
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+    # 5. Terraform Apply
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve tfplan

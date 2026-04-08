@@ -55,9 +55,7 @@
 2.  初始化並套用變更：
     ```bash
     terraform init
-    terraform apply \
-      -var="ai_code_review_project_id=YOUR_PROJECT_ID" \
-      -var="ai_code_review_github_repo=YOUR_GITHUB_REPO"
+    terraform apply
     ```
     *注意：此步驟會建立專屬的 WIF Pool 與 Provider，並根據提供的 GitHub Repository 建立對應的 Service Account (`tf-github-ai-reviewer`)。此架構支援多專案擴展，各專案擁有獨立的身份識別與權限。*
 
@@ -70,7 +68,7 @@
 2.  初始化並套用變更：
     ```bash
     terraform init
-    terraform apply -var="project_id=YOUR_PROJECT_ID"
+    terraform apply
     ```
     *在此階段，環境層會透過 Data Source 動態取得 Global 層建立的 Service Account 並授予部署所需的權限。*
 
