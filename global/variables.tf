@@ -1,4 +1,15 @@
-# ai_code_review 相關配置
+# jimmy-infra-admin 相關配置
+variable "jimmy_infra_admin_project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "jimmy_infra_admin_region" {
+  description = "GCP region"
+  type        = string
+}
+
+# ai-code-review 相關配置
 variable "ai_code_review_project_id" {
   description = "GCP Project ID"
   type        = string
