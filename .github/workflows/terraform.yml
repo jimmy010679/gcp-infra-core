@@ -44,12 +44,6 @@ jobs:
     # 4. Terraform Plan
     - name: Terraform Plan
       id: plan # 設定 ID 以便後續步驟引用輸出
-      run: terraform plan -no-color -input=false
-      continue-on-error: true # 即使 plan 有錯也繼續，方便我們把錯誤訊息貼到留言
-
-    # 4. Terraform Plan
-    - name: Terraform Plan
-      id: plan # 設定 ID 以便後續步驟引用輸出
       run: terraform plan -no-color -input=false -out=tfplan # 同時輸出 plan 檔案 (機器用) 且不帶顏色 (人看/腳本用)
       continue-on-error: true # 即使 plan 有錯也繼續，方便我們把錯誤訊息貼到留言
 
