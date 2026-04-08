@@ -46,21 +46,19 @@ jobs:
       env:
         TARGET_PROJECT: "gen-lang-client-0643862017"
       run: |
-        # 強制 gcloud 使用剛才換回來的憑證
-        export GOOGLE_APPLICATION_CREDENTIALS=${{ steps.auth.outputs.credentials_file_path }}
-        
         echo "=== 目前登入帳戶 ==="
-        # 檢查是否有帳戶被激活
+        # 顯示目前啟用的帳戶，正常應出現你的 SA 
         gcloud auth list
         
         echo "=== 檢查在目標專案中的權限 ==="
         CURRENT_SA=$(gcloud config get-value account)
         
-        if [ -z "$CURRENT_SA" ]; then
-          echo "錯誤：找不到有效的服務帳號身分！"
+        if [ "$CURRENT_SA" == "(unset)" ] || [ -z "$CURRENT_SA" ]; then
+          echo "錯誤：gcloud 仍未取得有效身分！"
           exit 1
         fi
         
+        # 檢查該 SA 在目標專案是否有權限 
         gcloud projects get-iam-policy $TARGET_PROJECT \
           --flatten="bindings[].members" \
           --filter="members:$CURRENT_SA" \
