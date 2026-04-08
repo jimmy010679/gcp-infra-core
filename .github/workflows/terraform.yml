@@ -46,15 +46,18 @@ jobs:
       env:
         TARGET_PROJECT: "gen-lang-client-0643862017"
       run: |
-        # 關鍵：如果 gcloud 抓不到，手動激活它 
-        gcloud auth activate-service-account ${{ vars.GCP_SERVICE_ACCOUNT }} --key-file=${{ steps.auth.outputs.credentials_file_path }}
+        echo "=== 使用 WIF 憑證登入 gcloud ==="
+        # 使用 WIF 專用的登入方式
+        gcloud auth login --cred-file=${{ steps.auth.outputs.credentials_file_path }}
         
         echo "=== 目前登入帳戶 ==="
         gcloud auth list
         
         echo "=== 檢查在目標專案中的權限 ==="
         CURRENT_SA=$(gcloud config get-value account)
+        echo "偵測到身分: $CURRENT_SA"
         
+        # 這裡會顯示該 SA 在 AI 專案中擁有的所有角色
         gcloud projects get-iam-policy $TARGET_PROJECT \
           --flatten="bindings[].members" \
           --filter="members:$CURRENT_SA" \
