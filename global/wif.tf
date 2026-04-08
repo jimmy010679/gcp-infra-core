@@ -202,6 +202,7 @@ resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
     "roles/iam.serviceAccountAdmin",         # 管理 SA
     "roles/serviceusage.serviceUsageAdmin",  # 管理 API 啟動
     "roles/resourcemanager.projectIamAdmin", # 修改 IAM 綁定
+    "roles/iam.serviceAccountTokenCreator",  # 取跨專案的 Token
     "roles/browser"                          # 確保能在 Console 或 API 讀取資源清單
   ])
   project = var.jimmy_infra_admin_project_id

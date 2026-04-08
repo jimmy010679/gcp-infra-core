@@ -40,6 +40,23 @@ jobs:
         workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
         service_account: '${{ vars.GCP_SERVICE_ACCOUNT }}'
 
+    - name: 'Check Identity'
+      # 這裡手動指定 AI 專案 ID 進行檢查，或是使用你的變數
+      env:
+        TARGET_PROJECT: "gen-lang-client-0643862017"
+      run: |
+        echo "=== 目前登入帳戶 ==="
+        gcloud auth list
+        
+        echo "=== 檢查在目標專案中的權限 ==="
+        # 取得目前帳戶並檢查它在 AI 專案中的 IAM 角色
+        CURRENT_SA=$(gcloud config get-value account)
+        gcloud projects get-iam-policy $TARGET_PROJECT \
+          --flatten="bindings[].members" \
+          --filter="members:$CURRENT_SA" \
+          --format="table(bindings.role)"
+    # --- 結束插入 ---
+
     # 2. 安裝 Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v4
