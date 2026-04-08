@@ -17,6 +17,6 @@ resource "google_project_iam_member" "sa_ai_code_review_roles" {
   project = var.ai_code_review_project_id
   role    = each.key
 
-  # 引用新 Data Source 的 email
-  member  = "serviceAccount:${data.google_service_account.ai_reviewer_sa.email}"
+  # 直接用變數拼接出完整的 SA Email
+  member  = "serviceAccount:tf-github-ai-code-review@${var.jimmy_infra_admin_project_id}.iam.gserviceaccount.com"
 }
