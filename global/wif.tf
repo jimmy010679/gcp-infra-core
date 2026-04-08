@@ -186,10 +186,11 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_service_access
 # [專案權限] 授予 gcp-infra-core 服務帳號 管理行政專案(WIF/IAM/API) 的權限
 resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
   for_each = toset([
-    "roles/iam.workloadIdentityPoolAdmin",  # 管理 WIF Pool/Provider
-    "roles/iam.serviceAccountAdmin",        # 管理 SA
-    "roles/serviceusage.serviceUsageAdmin", # 管理 API 啟動
-    "roles/resourcemanager.projectIamAdmin" # 修改 IAM 綁定
+    "roles/iam.workloadIdentityPoolAdmin",   # 管理 WIF Pool/Provider
+    "roles/iam.serviceAccountAdmin",         # 管理 SA
+    "roles/serviceusage.serviceUsageAdmin",  # 管理 API 啟動
+    "roles/resourcemanager.projectIamAdmin", # 修改 IAM 綁定
+    "roles/browser"                          # 確保能在 Console 或 API 讀取資源清單
   ])
   project = var.jimmy_infra_admin_project_id
   role    = each.key
