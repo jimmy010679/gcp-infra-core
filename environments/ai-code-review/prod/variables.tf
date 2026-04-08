@@ -1,10 +1,10 @@
-variable "app_name" {
-  description = "應用程式或專案的識別名稱"
+variable "ai_code_review_project_id" {
+  description = "GCP Project ID"
   type        = string
 }
 
-variable "project_id" {
-  description = "GCP Project ID"
+variable "ai_code_review_app_name" {
+  description = "應用程式或專案的識別名稱"
   type        = string
 }
 

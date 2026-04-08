@@ -2,7 +2,7 @@
 data "google_service_account" "ai_reviewer_sa" {
   # 這裡的 account_id 必須跟你在 global/wif.tf 定義的一模一樣
   account_id = "tf-github-ai-reviewer"
-  project    = var.project_id
+  project    = var.ai_code_review_project_id
 }
 
 # 2. Service Account 授予必要權限，並引用 Data Source 的 email 屬性
@@ -13,7 +13,7 @@ resource "google_project_iam_member" "sa_roles" {
     "roles/iam.serviceAccountUser"
   ])
   
-  project = var.project_id
+  project = var.ai_code_review_project_id
   role    = each.key
 
   # 引用新 Data Source 的 email

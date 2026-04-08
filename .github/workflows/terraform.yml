@@ -15,6 +15,10 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
+    env:
+      TF_VAR_ai_code_review_project_id: ${{ vars.GCP_AI_CODE_REVIEW_PROJECT_ID }}
+      TF_VAR_ai_code_review_app_name: ${{ vars.GCP_AI_CODE_REVIEW_APP_NAME }}
+      TF_VAR_region: ${{ vars.GCP_REGION }}
     
     # 這裡可以根據你的目錄結構設定工作目錄
     defaults:

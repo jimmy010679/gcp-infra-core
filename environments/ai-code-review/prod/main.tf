@@ -12,7 +12,7 @@ resource "google_artifact_registry_repository" "my_repo" {
 
 # 建立 Cloud Run 服務 (基礎殼)
 resource "google_cloud_run_v2_service" "hello_service" {
-  name     = "${var.app_name}-cloud-run" # 對應 CLOUD_RUN_SERVICE_NAME
+  name     = "${var.ai_code_review_app_name}-cloud-run" # 對應 CLOUD_RUN_SERVICE_NAME
   location = var.region
 
   # 允許任何人瀏覽（對外開放）
@@ -22,7 +22,7 @@ resource "google_cloud_run_v2_service" "hello_service" {
     containers {
       # 初始先用 hello，等一下由 GitHub Actions 推送真正的 Image
       image = "us-docker.pkg.dev/cloudrun/container/hello"
-      # image = "${var.region}-docker.pkg.dev/${var.project_id}/ai-code-review-repo/ai-code-review-run:latest"
+      # image = "${var.region}-docker.pkg.dev/${var.ai_code_review_project_id}/ai-code-review-repo/ai-code-review-run:latest"
     }
   }
 
