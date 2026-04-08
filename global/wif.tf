@@ -4,9 +4,10 @@
 
 locals {
   base_services = [
-    "iam.googleapis.com",            # 管理 SA 與權限
-    "iamcredentials.googleapis.com", # 關鍵：支援 WIF 換票認證
-    "serviceusage.googleapis.com"    # 讓 TF 能檢查/管理其他 API 狀態
+    "iam.googleapis.com",                 # 管理 SA 與權限
+    "iamcredentials.googleapis.com",      # 關鍵：支援 WIF 換票認證
+    "serviceusage.googleapis.com",        # 讓 TF 能檢查/管理其他 API 狀態
+    "cloudresourcemanager.googleapis.com" # 基礎設施管理總入口，允許 TF 修改專案層級的 IAM 與 API 狀態
   ]
 }
 
