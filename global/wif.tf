@@ -146,6 +146,31 @@ resource "google_project_iam_member" "remote_storage_access" {
   member  = "serviceAccount:${each.key}"
 }
 
+# [通用權限] 建立一個清單，讓 SA 都能讀取行政專案內的 SA 資訊
+resource "google_project_iam_member" "sa_self_viewer" {
+  for_each = toset([
+    google_service_account.sa_gcp_infra_core.email,
+    google_service_account.sa_ai_code_review.email,
+    google_service_account.sa_test_k8s_app.email
+  ])
+  project = var.jimmy_infra_admin_project_id
+  role    = "roles/iam.serviceAccountViewer"
+  member  = "serviceAccount:${each.key}"
+}
+
+# [專案權限] 授予 gcp-infra-core 服務帳號 管理行政專案(WIF/IAM/API) 的權限
+resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
+  for_each = toset([
+    "roles/iam.workloadIdentityPoolAdmin",  # 管理 WIF Pool/Provider
+    "roles/iam.serviceAccountAdmin",        # 管理 SA
+    "roles/serviceusage.serviceUsageAdmin", # 管理 API 啟動
+    "roles/resourcemanager.projectIamAdmin" # 修改 IAM 綁定
+  ])
+  project = var.jimmy_infra_admin_project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
 # [專案權限] 授予 ai-code-review 服務帳號 操作權限
 resource "google_project_iam_member" "sa_ai_code_review_roles" {
   for_each = toset([
