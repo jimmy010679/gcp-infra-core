@@ -183,6 +183,18 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_service_access
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
+# [跨專案管理] 讓 gcp-infra-core SA 能讀取所有應用專案的資源現狀 (Refresh 階段必備)
+resource "google_project_iam_member" "sa_infra_core_resource_viewer" {
+  for_each = toset([
+    var.ai_code_review_project_id,
+    var.test_k8s_app_project_id
+  ])
+  
+  project = each.key
+  role    = "roles/viewer"  # 授予 Viewer 角色，讓 Terraform Plan 具備讀取資源屬性的權限
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
 # [專案權限] 授予 gcp-infra-core 服務帳號 管理行政專案(WIF/IAM/API) 的權限
 resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
   for_each = toset([
