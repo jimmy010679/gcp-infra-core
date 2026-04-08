@@ -45,7 +45,7 @@ resource "google_service_account" "sa_ai_reviewer" {
   display_name = "SA for AI Code Review Project"
 }
 
-# 建立 ai-code-review Repo 能變成 sa_ai_reviewer
+# 建立 ai-code-review 綁定 GitHub 信任關係
 resource "google_service_account_iam_member" "binding_ai_reviewer" {
   service_account_id = google_service_account.sa_ai_reviewer.name
   role               = "roles/iam.workloadIdentityUser"
@@ -54,22 +54,32 @@ resource "google_service_account_iam_member" "binding_ai_reviewer" {
   member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/ai-code-review"
 }
 
-# 建立 gcp-infra-core (Terraform 專案) 使用此 SA
+# 建立 gcp-infra-core 綁定 GitHub 信任關係
 resource "google_service_account_iam_member" "binding_infra_core" {
   service_account_id = google_service_account.sa_ai_reviewer.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/gcp-infra-core"
 }
 
-# 授予 SA 操作 Cloud Run、Artifact Registry 和 Service Account 的权限
+# 授予 專案 操作權限
 resource "google_project_iam_member" "sa_roles" {
   for_each = toset([
     "roles/run.admin",
     "roles/artifactregistry.admin",
     "roles/iam.serviceAccountUser",
-    "roles/browser" # 允许 Terraform 查看
+    "roles/browser"
   ])
   project = var.ai_code_review_project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_ai_reviewer.email}"
+}
+
+# ====================================================================================
+# 4. 跨專案權限：授予 SA 存取遠端 Terraform Backend (GCS Bucket)
+# ====================================================================================
+
+resource "google_project_iam_member" "remote_storage_access" {
+  project = "jimmy-infra-admin" # 存放 tfstate 的行政管理專案
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.sa_ai_reviewer.email}" # 改用引用方式，避免打錯字
 }
