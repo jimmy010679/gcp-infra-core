@@ -61,4 +61,4 @@
 | 類型 | 變數名稱 | 說明 |
 | :--- | :--- | :--- |
 | **Variables** | `GCP_WIF_PROVIDER` | WIF Provider 完整路徑 |
-| **Secrets**   | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
+| **Variables** | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
