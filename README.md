@@ -1,24 +1,46 @@
-# GCP Infrastructure Core (Terraform)
+# GCP Infrastructure Core (IaC)
 
-這是一個基於 Terraform 管理的 Google Cloud Platform (GCP) 基礎架構專案。主要用於部署與管理一個 AI Code Review 應用程式的基礎資源，並透過 Workload Identity Federation (WIF) 實現與 GitHub Actions 的安全整合。
+![Terraform Infrastructure](https://github.com/jimmy010679/gcp-infra-core/actions/workflows/terraform.yml/badge.svg)
 
-## 專案架構
-
-本專案採用分層式的 Terraform 架構，旨在支援**多專案、多環境**的靈活管理：
-
-*   **Global (`/global`)**: 管理跨環境的共用資源，特別是針對各個應用專案（如 AI Code Review）配置獨立的 Workload Identity Federation (WIF) 與專屬 Service Accounts，確保身分驗證的最小權限原則。
-*   **Environments (`/environments`)**: 根據應用專案分類（如 `ai-code-review/`），並依環境（如 `prod/`）管理特定資源。
-*   **Modules (`/modules`)**: 存放可重複使用的 Terraform 模組，供不同應用程式調用。
-
-### 核心組件
-
-1.  **Workload Identity Federation (WIF)**: 允許 GitHub Actions 安全地存取 GCP 資源，無需管理長期有效的 Service Account Key。
-2.  **Artifact Registry**: 用於儲存 AI Code Review 應用程式的 Docker 映像檔。
-3.  **Cloud Run**: 部署 AI Code Review 服務，具備自動縮放與公開存取功能。
+本專案是雲端環境的 **管理核心 (Management Hub)**，採用 **Terraform** 實作基礎設施即代碼 (IaC)。透過分層管理架構，定義並維護應用專案所需的身分驗證（WIF）、網路資源與伺服器基礎架構。
 
 ---
 
-## 目錄結構
+## 🏗 架構設計亮點
+
+### 1. 無密鑰安全認證 (Workload Identity Federation)
+捨棄具資安風險的傳統靜態 Service Account JSON Key，採用 **GCP Workload Identity Federation (WIF)**：
+* [cite_start]**OIDC 信任機制**：建立 GitHub 與 Google Cloud 間的 OIDC 信任關係。
+* [cite_start]**最小權限原則**：精確限制僅允許特定的 GitHub 儲存庫（如 `ai-code-review`）換取臨時憑證。
+
+### 2. 跨專案資源管理 (Cross-Project Administration)
+實踐企業級的專案隔離架構，區分「行政管理」與「應用執行」環境：
+* [cite_start]**遠端狀態儲存 (Remote Backend)**：Terraform State 存放於獨立的 `jimmy-infra-admin` 專案中，確保狀態檔的安全與集中管理。
+* [cite_start]**跨專案授權**：透過 `google_project_iam_member` 授予部署帳號跨專案存取儲存桶 (GCS) 的權限，解決 `403 Forbidden` 認證問題。
+
+---
+
+## 🛠 CI/CD 與自動化流水線
+
+本專案透過 **GitHub Actions** 實現高度自動化的基礎設施維護流程：
+
+### 基礎設施自動化流程 (IaC Pipeline)
+1. **認證 (Authenticate)**：利用 WIF 動作換取 GCP 臨時存取權限。
+2. **初始化 (Init)**：跨專案連接至遠端 GCS Backend 初始化環境。
+3. **自動化審查 (Plan on PR)**：
+   * 當發起 Pull Request 時，自動執行 `terraform plan`。
+   * [cite_start]利用 `github-script` 將 Plan 結果自動留言於 PR 下方，方便代碼審查。
+4. **自動化部署 (Apply on Push)**：
+   * 僅在代碼合併至 `main` 分支後，才觸發 `terraform apply` 進行實際資源更動。
+
+### 資源生命週期策略
+針對 Cloud Run 等動態資源，配置了 **Lifecycle Policy**：
+* [cite_start]**`ignore_changes`**：排除 `image` 與 `labels` 的變動追蹤。
+* **價值**：確保基礎設施狀態不會與應用程式層級的 CI/CD（如頻繁的 Image 更新）產生衝突，達成權責分離 [cite: 2]。
+
+---
+
+## 📂 專案結構
 
 ```text
 .
@@ -34,61 +56,12 @@
 
 ---
 
-## 快速上手
+## ⚙️ 必備 GitHub 變數設定
 
-### 前置作業
-
-1.  安裝 [Terraform](https://www.terraform.io/downloads.html) (建議版本 v1.0.0+)。
-2.  安裝 [Google Cloud SDK (gcloud)](https://cloud.google.com/sdk/docs/install)。
-3.  確保您具備 GCP 專案的 `Owner` 或足夠的 IAM 權限。
-4.  完成 gcloud 驗證：
-    ```bash
-    gcloud auth application-default login
-    ```
-
-### 部署全域資源 (WIF)
-
-1.  進入 `global` 目錄：
-    ```bash
-    cd global
-    ```
-2.  初始化並套用變更：
-    ```bash
-    terraform init
-    terraform apply
-    ```
-    *注意：此步驟會建立專屬的 WIF Pool 與 Provider，並根據提供的 GitHub Repository 建立對應的 Service Account (`tf-github-ai-reviewer`)。此架構支援多專案擴展，各專案擁有獨立的身份識別與權限。*
-
-### 部署生產環境資源
-
-1.  進入 `prod` 目錄：
-    ```bash
-    cd environments/ai-code-review/prod
-    ```
-2.  初始化並套用變更：
-    ```bash
-    terraform init
-    terraform apply
-    ```
-    *在此階段，環境層會透過 Data Source 動態取得 Global 層建立的 Service Account 並授予部署所需的權限。*
-
----
-
-## CI/CD 整合 (GitHub Actions)
-
-本專案配置了 WIF 以支援安全部署。在 GitHub Actions 的 Workflow 中，您需要提供以下資訊：
-
-*   **Workload Identity Provider**: `projects/<PROJECT_NUMBER>/locations/global/workloadIdentityPools/github-pool-tf/providers/github-provider-tf`
-*   **Service Account**: `tf-github-ai-reviewer@<PROJECT_ID>.iam.gserviceaccount.com`
-
-### 部署邏輯說明
-
-*   **Artifact Registry**: 啟用了 `prevent_destroy` 以防止意外刪除映像檔。
-*   **Cloud Run**: 透過 `lifecycle { ignore_changes = [template[0].containers[0].image] }` 確保 Terraform 不會覆蓋由 GitHub Actions 更新的映像檔。
-
----
-
-## 注意事項
-
-*   **安全性**: `global/wif.tf` 中限制了只有特定的 GitHub Repository 可以交換 Token，請確保 `attribute_condition` 符合您的實際需求。
-*   **成本控管**: 專案中使用的 Cloud Run 與 Artifact Registry 資源會產生費用，不使用時請記得銷毀或縮減規模。
+| 類型 | 變數名稱 | 說明 |
+| :--- | :--- | :--- |
+| **Variables** | `GCP_AI_CODE_REVIEW_PROJECT_ID` | 目標 GCP 專案 ID |
+| **Variables** | `GCP_AI_CODE_REVIEW_APP_NAME` | 目標 GCP ai-code-review 名稱 |
+| **Variables** | `GCP_WIF_PROVIDER` | WIF Provider 完整路徑 |
+| **Variables** | `GCP_REGION` | 部署區域 (如 `asia-east1`) |
+| **Secrets**   | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
