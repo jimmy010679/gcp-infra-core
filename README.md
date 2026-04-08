@@ -47,6 +47,8 @@
 ├── environments/           # 環境特定配置
 │   └── ai-code-review/
 │       └── prod/           # 生產環境配置 (Cloud Run, Artifact Registry)
+│   └── test-k8s-app/
+│       └── prod/           # 生產環境配置
 ├── global/                 # 全域共用資源 (WIF, IAM)
 ├── modules/                # 可重複使用的模組
 │   ├── cloud-run-app/      # Cloud Run 模組

@@ -15,11 +15,18 @@ jobs:
   terraform:
     name: 'Terraform'
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # 定義你所有的目錄路徑
+        path: [
+          'global', 
+          'environments/ai-code-review/prod', 
+          'environments/test-k8s-app/prod'
+        ]
     
-    # 這裡可以根據你的目錄結構設定工作目錄
     defaults:
       run:
-        working-directory: ./environments/ai-code-review/prod
+        working-directory: ./${{ matrix.path }}
 
     steps:
     - name: Checkout
@@ -30,6 +37,8 @@ jobs:
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v3'
       with:
+        create_credentials_file: true
+        export_environment_variables: true
         workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
         service_account: '${{ vars.GCP_SERVICE_ACCOUNT }}'
 
