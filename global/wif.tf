@@ -183,7 +183,8 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_service_access
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
-#
+# [中心化管理權限] 授予 sa_gcp_infra_core
+# 直接操作應用專案資源 (GAR/Cloud Run) 的權限，以利中心化維護所有基礎設施
 resource "google_project_iam_member" "sa_infra_core_resource_admin" {
   for_each = toset([
     "roles/artifactregistry.repoAdmin", # 管理/讀取 GAR 儲存庫
@@ -191,7 +192,7 @@ resource "google_project_iam_member" "sa_infra_core_resource_admin" {
     "roles/browser"                     # 允許在專案內查看基礎資源清單
   ])
   
-  project = var.ai_code_review_project_id # 針對 AI 專案
+  project = var.ai_code_review_project_id # 針對 ai-code-review 專案
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
