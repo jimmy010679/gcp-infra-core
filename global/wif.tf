@@ -191,7 +191,7 @@ resource "google_project_iam_member" "sa_infra_core_resource_viewer" {
   ])
   
   project = each.key
-  role    = "roles/viewer"  # 授予 Viewer 角色，讓 Terraform Plan 具備讀取資源屬性的權限
+  role    = "roles/editor"  # 授予 Viewer 角色，讓 Terraform Plan 具備讀取資源屬性的權限
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
