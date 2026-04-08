@@ -159,6 +159,30 @@ resource "google_project_iam_member" "sa_self_viewer" {
   member  = "serviceAccount:${each.key}"
 }
 
+# [跨專案管理] 讓 gcp-infra-core 有權管理旗下專案
+resource "google_project_iam_member" "sa_infra_core_cross_project_access" {
+  for_each = toset([
+    var.ai_code_review_project_id,
+    var.test_k8s_app_project_id
+  ])
+  
+  project = each.key
+  role    = "roles/resourcemanager.projectIamAdmin" # 為了管理各專案的 IAM
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
+# [跨專案管理] 讓 gcp-infra-core 有權管理旗下專案
+resource "google_project_iam_member" "sa_infra_core_cross_project_service_access" {
+  for_each = toset([
+    var.ai_code_review_project_id,
+    var.test_k8s_app_project_id
+  ])
+  
+  project = each.key
+  role    = "roles/serviceusage.serviceUsageAdmin" # 為了管理各專案的 API (三劍客)
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
 # [專案權限] 授予 gcp-infra-core 服務帳號 管理行政專案(WIF/IAM/API) 的權限
 resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
   for_each = toset([
@@ -194,3 +218,4 @@ resource "google_project_iam_member" "sa_test_k8s_app_roles" {
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_test_k8s_app.email}"
 }
+
