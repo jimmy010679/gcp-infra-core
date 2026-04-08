@@ -196,18 +196,6 @@ resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
-# [專案權限] 授予 ai-code-review 服務帳號 操作權限
-resource "google_project_iam_member" "sa_ai_code_review_roles" {
-  for_each = toset([
-    "roles/artifactregistry.admin",
-    "roles/iam.serviceAccountUser",
-    "roles/browser"
-  ])
-  project = var.ai_code_review_project_id
-  role    = each.key
-  member  = "serviceAccount:${google_service_account.sa_ai_code_review.email}"
-}
-
 # [專案權限] 授予 test-k8s-app 服務帳號 GKE 部署權限
 resource "google_project_iam_member" "sa_test_k8s_app_roles" {
   for_each = toset([
