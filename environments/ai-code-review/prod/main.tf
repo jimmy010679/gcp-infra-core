@@ -30,8 +30,14 @@ resource "google_cloud_run_v2_service" "hello_service" {
   # 後續由 GitHub Actions 更新 image 時，Terraform 就不會管它了
   lifecycle {
     ignore_changes = [
-      template[0].containers[0].image,
+      template[0].containers[0].image, # 讓 CI/CD 負責更新映像檔 
+      client,                          # 忽略 gcloud 自動注入資訊 
+      client_version,                  # 忽略部署工具版本差異 
+      template[0].labels,              # 忽略動態產生的標籤 (如 Commit SHA)
     ]
+
+    # 視需求開啟，避免整組服務被意外刪除 
+    # prevent_destroy = true
   }
 
   deletion_protection = false # 練習與頻繁測試用
