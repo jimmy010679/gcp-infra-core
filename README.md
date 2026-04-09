@@ -2,41 +2,44 @@
 
 ![Terraform Infrastructure](https://github.com/jimmy010679/gcp-infra-core/actions/workflows/terraform.yml/badge.svg)
 
-本專案是雲端環境的 **管理核心 (Management Hub)**，採用 **Terraform** 實作基礎設施即代碼 (IaC)。透過分層管理架構，定義並維護應用專案所需的身分驗證（WIF）、網路資源與伺服器基礎架構。
+本專案是雲端環境的 **管理核心 (Management Hub)**，採用 **Terraform** 實作基礎設施即代碼 (IaC)。透過「地基與應用分離」的架構，定義並維護全域身分驗證（WIF）、行政專案權限與各應用專案的基礎架構。
 
 ---
 
 ## 🏗 架構設計亮點
 
 ### 1. 無密鑰安全認證 (Workload Identity Federation)
-捨棄具資安風險的傳統靜態 Service Account JSON Key，採用 **GCP Workload Identity Federation (WIF)**：
-* [cite_start]**OIDC 信任機制**：建立 GitHub 與 Google Cloud 間的 OIDC 信任關係。
-* [cite_start]**最小權限原則**：精確限制僅允許特定的 GitHub 儲存庫（如 `ai-code-review`）換取臨時憑證。
+捨棄具資安風險的傳統靜態 JSON Key，採用 **GCP WIF** 實作 Keyless 認證：
+* **OIDC 信任機制**：建立 GitHub 與 Google Cloud 間的信任關係，僅限特定 Repo 換取臨時憑證。
+* **身分與權限分離**：行政專案負責「核發身分」，應用專案負責「執行任務」，達成清晰的權責分界。
 
-### 2. 跨專案資源管理 (Cross-Project Administration)
-實踐企業級的專案隔離架構，區分「行政管理」與「應用執行」環境：
-* [cite_start]**遠端狀態儲存 (Remote Backend)**：Terraform State 存放於獨立的 `jimmy-infra-admin` 專案中，確保狀態檔的安全與集中管理。
-* [cite_start]**跨專案授權**：透過 `google_project_iam_member` 授予部署帳號跨專案存取儲存桶 (GCS) 的權限，解決 `403 Forbidden` 認證問題。
+### 2. 中心化管理策略 (Centralized Governance)
+* **內政管理 (Self-Management)**：授予管理 SA 在行政專案中的 `iam.workloadIdentityPoolAdmin` 等角色，使其具備維護自身認證體系的能力。
+* **跨專案行政權**：透過 `serviceusage.serviceUsageAdmin` 與 `projectIamAdmin` 讓核心 SA 能跨專案自動開啟 API 並管理成員權限。
+* **遠端狀態鎖定**：所有環境的 Terraform State 均集中存放於 `jimmy-infra-admin` 專案的 GCS Bucket，並實作跨專案存取授權。
 
 ---
 
-## 🛠 CI/CD 與自動化流水線
+## 🛠 CI/CD 雙階流水線
 
-本專案透過 **GitHub Actions** 實現高度自動化的基礎設施維護流程：
+本專案透過 **GitHub Actions** 實作具備依賴檢查的自動化流程：
 
-### 基礎設施自動化流程 (IaC Pipeline)
-1. **認證 (Authenticate)**：利用 WIF 動作換取 GCP 臨時存取權限。
-2. **初始化 (Init)**：跨專案連接至遠端 GCS Backend 初始化環境。
-3. **自動化審查 (Plan on PR)**：
-   * 當發起 Pull Request 時，自動執行 `terraform plan`。
-   * [cite_start]利用 `github-script` 將 Plan 結果自動留言於 PR 下方，方便代碼審查。
-4. **自動化部署 (Apply on Push)**：
-   * 僅在代碼合併至 `main` 分支後，才觸發 `terraform apply` 進行實際資源更動。
+### 兩階段執行邏輯 (Dependency Pipeline)
+為了確保權限與地基先行，流水線拆分為兩個連續任務：
 
-### 資源生命週期策略
-針對 Cloud Run 等動態資源，配置了 **Lifecycle Policy**：
-* [cite_start]**`ignore_changes`**：排除 `image` 與 `labels` 的變動追蹤。
-* **價值**：確保基礎設施狀態不會與應用程式層級的 CI/CD（如頻繁的 Image 更新）產生衝突，達成權責分離 [cite: 2]。
+1. **🌍 第一階段：Global Infra (地基)**
+   * **路徑**：`./global`
+   * **核心任務**：更新 WIF Pool、SA 帳號、行政專案 API 與跨專案 IAM 授權。
+   * **重要性**：此任務必須成功，後續應用環境才能獲得正確的授權進行操作。
+
+2. **🚀 第二階段：App Infra (應用環境)**
+   * **路徑**：`./environments/*`
+   * **核心任務**：透過矩陣（Matrix）同時部署 `ai-code-review` 與 `test-k8s-app` 的具體資源。
+   * **特性**：採用 `fail-fast: false` 策略，確保個別環境失敗不會干擾其他專案部署。
+
+### 自動化回饋機制
+* **Plan on PR**：當發起 Pull Request 時，`global` 與各個 `matrix path` 都會自動執行 `terraform plan`，並利用 `github-script` 將結果貼回 PR 留言，實現透明化審查。
+* **Apply on Push**：僅在合併至 `main` 分支後，才觸發 `terraform apply -auto-approve` 進行正式資源異動。
 
 ---
 
