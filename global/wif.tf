@@ -1,13 +1,13 @@
 # ====================================================================================
-# 0. 啟動基礎三劍客 API (infra行政專案皆建議開啟)
+# 0. 啟動基礎設施核心 API (專案基石 API，建議所有環境均開啟)
 # ====================================================================================
 
 locals {
   base_services = [
-    "iam.googleapis.com",                 # 管理 SA 與權限
-    "iamcredentials.googleapis.com",      # 關鍵：支援 WIF 換票認證
-    "serviceusage.googleapis.com",        # 讓 TF 能檢查/管理其他 API 狀態
-    "cloudresourcemanager.googleapis.com" # 基礎設施管理總入口，允許 TF 修改專案層級的 IAM 與 API 狀態
+    "iam.googleapis.com",                 # 【身分定義】管理服務帳號 (SA) 與角色權限
+    "iamcredentials.googleapis.com",      # 【認證核心】支援 WIF 換票，實作 GitHub Actions 無密鑰登入
+    "serviceusage.googleapis.com",        # 【功能開關】讓 Terraform 具備啟動/禁用其他 GCP API 的能力
+    "cloudresourcemanager.googleapis.com" # 【專案入口】基礎設施管理總入口，允許修改專案層級 IAM 綁定與元數據
   ]
 }
 
@@ -20,9 +20,17 @@ resource "google_project_service" "admin_base_services" {
 }
 
 # ai-code-review 啟動應用專案 API
-resource "google_project_service" "app_base_services" {
+resource "google_project_service" "ai_code_review_base_services" {
   for_each = toset(local.base_services)
   project  = var.ai_code_review_project_id
+  service  = each.key
+  disable_on_destroy = false
+}
+
+# test-k8s-app 啟動應用專案 API
+resource "google_project_service" "test_k8s_app_base_services" {
+  for_each = toset(local.base_services)
+  project  = var.test_k8s_app_project_id
   service  = each.key
   disable_on_destroy = false
 }
@@ -33,7 +41,7 @@ resource "google_project_service" "app_base_services" {
 
 # 建立 ai_reviewer_pool GCP project 的 Pool
 resource "google_iam_workload_identity_pool" "new_github_pool" {
-  project                   = var.jimmy_infra_admin_project_id # 鎖在行政專案
+  project                   = var.jimmy_infra_admin_project_id # 鎖在infra行政專案
   workload_identity_pool_id = "github-pool-tf" 
   display_name              = "GitHub Pool Managed by TF"
   description               = "Identity pool for GitHub Actions"
@@ -135,7 +143,7 @@ resource "google_service_account_iam_member" "binding_test_k8s_app" {
 # 5. 授予 服務帳號 操作權限
 # ====================================================================================
 
-# [通用權限] 建立一個清單，讓 SA 都能存取 tfstate
+# [跨專案權限] 允許各專案 Infra SA 存取 infra 行政專案的 GCS Backend (讀寫 tfstate)
 resource "google_project_iam_member" "remote_storage_access" {
   for_each = toset([
     google_service_account.sa_gcp_infra_core.email,
@@ -147,7 +155,7 @@ resource "google_project_iam_member" "remote_storage_access" {
   member  = "serviceAccount:${each.key}"
 }
 
-# [通用權限] 建立一個清單，讓 SA 都能讀取行政專案內的 SA 資訊
+# [身分檢視] 允許各專案 Infra SA 讀取行政專案內的 SA 屬性 (避免 TF Plan 時權限不足)
 resource "google_project_iam_member" "sa_self_viewer" {
   for_each = toset([
     google_service_account.sa_gcp_infra_core.email,
@@ -159,7 +167,7 @@ resource "google_project_iam_member" "sa_self_viewer" {
   member  = "serviceAccount:${each.key}"
 }
 
-# [跨專案管理] 讓 gcp-infra-core 有權管理旗下專案
+# [跨專案管理] 授予 Infra SA 對旗下專案的 IAM 管理權 (使其具備修改各專案權限清單的能力)
 resource "google_project_iam_member" "sa_infra_core_cross_project_access" {
   for_each = toset([
     var.ai_code_review_project_id,
@@ -171,7 +179,7 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_access" {
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
-# [跨專案管理] 讓 gcp-infra-core 有權管理旗下專案
+# [跨專案管理] 授予 Infra SA 對旗下專案的服務啟用權 (使其具備自動化開啟/管理 GCP API 的能力)
 resource "google_project_iam_member" "sa_infra_core_cross_project_service_access" {
   for_each = toset([
     var.ai_code_review_project_id,
@@ -179,25 +187,24 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_service_access
   ])
   
   project = each.key
-  role    = "roles/serviceusage.serviceUsageAdmin" # 為了管理各專案的 API (三劍客)
+  role    = "roles/serviceusage.serviceUsageAdmin" # 核心權限：允許 TF 自動啟用目標專案所需的基礎服務 API
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
-# [中心化管理權限] 授予 sa_gcp_infra_core
-# 直接操作應用專案資源 (GAR/Cloud Run) 的權限，以利中心化維護所有基礎設施
+# [跨專案管理] 授予 Infra SA 對 ai-code-review 應用專案的資源管理權 (使其能實際部署與操作 Cloud Run/GAR 等資源)
 resource "google_project_iam_member" "sa_infra_core_resource_admin" {
   for_each = toset([
     "roles/artifactregistry.repoAdmin", # 管理/讀取 GAR 儲存庫
     "roles/run.admin",                  # 管理/讀取 Cloud Run 服務
-    "roles/browser"                     # 允許在專案內查看基礎資源清單
+    "roles/browser"                     # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
   ])
   
-  project = var.ai_code_review_project_id # 針對 ai-code-review 專案
+  project = var.ai_code_review_project_id # 目標專案：ai-code-review
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
 
-# [專案權限] 授予 gcp-infra-core 服務帳號 管理行政專案(WIF/IAM/API) 的權限
+# [行政專案自管理] 授予 Infra SA 對 infra行政專案 的完全控制權 (使其具備自定義 WIF 信任關係與管理身分的能力)
 resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
   for_each = toset([
     "roles/iam.workloadIdentityPoolAdmin",   # 管理 WIF Pool/Provider

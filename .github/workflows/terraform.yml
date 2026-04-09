@@ -12,14 +12,84 @@ permissions:
   pull-requests: write # 允許在 PR 下方留言（寫入評論）的關鍵權限
 
 jobs:
-  terraform:
-    name: 'Terraform'
+  # ==========================================
+  # 1. 地基階段 (Global)：處理 WIF, SA 與 核心 IAM
+  # ==========================================
+  global:
+    name: 'Global Infra (Admin)'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./global
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+
+    # 1. 透過 WIF 認證到 GCP
+    - id: 'auth'
+      name: 'Authenticate to Google Cloud'
+      uses: 'google-github-actions/auth@v3'
+      with:
+        workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
+        service_account: '${{ vars.GCP_SERVICE_ACCOUNT }}'
+
+    # 2. 安裝 Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v4
+
+    # 3. Terraform Init
+    - name: Terraform Init
+      run: terraform init
+
+    # 4. Terraform Plan
+    - name: Terraform Plan
+      id: plan # 設定 ID 以便後續步驟引用輸出
+      run: terraform plan -no-color -input=false
+      continue-on-error: true # 即使 plan 有錯也繼續，方便我們把錯誤訊息貼到留言
+
+    # 5. 使用腳本將結果貼回 PR (僅在 PR 時觸發)
+    - name: Update Pull Request
+      uses: actions/github-script@v8
+      if: github.event_name == 'pull_request'
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `### 🌍 Global Infra Plan 📖 \`${{ steps.plan.outcome }}\`
+          
+          <details><summary>顯示詳細 Global Plan 內容</summary>
+          
+          \`\`\`terraform
+          ${{ steps.plan.outputs.stdout }}
+          \`\`\`
+          
+          </details>
+          
+          *執行路徑: \`./global\`*`;
+            
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+
+      # 6. Terraform Apply
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve
+
+  # ==========================================
+  # 2. 應用階段 (Environments)：處理各應用專案的資源
+  # ==========================================
+  environments:
+    name: 'App Infra (Matrix)'
+    needs: global # 【關鍵】確保地基權限先跑完，成功後才啟動
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false # 防止單一環境失敗導致其他環境被取消
       matrix:
-        # 定義你所有的目錄路徑
         path: [
-          'global', 
           'environments/ai-code-review/prod', 
           'environments/test-k8s-app/prod'
         ]
@@ -37,8 +107,6 @@ jobs:
       name: 'Authenticate to Google Cloud'
       uses: 'google-github-actions/auth@v3'
       with:
-        create_credentials_file: true
-        export_environment_variables: true
         workload_identity_provider: '${{ vars.GCP_WIF_PROVIDER }}'
         service_account: '${{ vars.GCP_SERVICE_ACCOUNT }}'
 
@@ -53,7 +121,7 @@ jobs:
     # 4. Terraform Plan
     - name: Terraform Plan
       id: plan # 設定 ID 以便後續步驟引用輸出
-      run: terraform plan -no-color -input=false -out=tfplan # 同時輸出 plan 檔案 (機器用) 且不帶顏色 (人看/腳本用)
+      run: terraform plan -no-color -input=false
       continue-on-error: true # 即使 plan 有錯也繼續，方便我們把錯誤訊息貼到留言
 
     # 5. 使用腳本將結果貼回 PR (僅在 PR 時觸發)
@@ -63,9 +131,9 @@ jobs:
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          const output = `#### Terraform Plan 📖 \`${{ steps.plan.outcome }}\`
+          const output = `### 🚀 App Plan [${{ matrix.path }}] 📖 \`${{ steps.plan.outcome }}\`
           
-          <details><summary>顯示詳細 Plan 內容</summary>
+          <details><summary>顯示詳細內容</summary>
           
           \`\`\`terraform
           ${{ steps.plan.outputs.stdout }}
@@ -73,7 +141,7 @@ jobs:
           
           </details>
           
-          *執行者: @${{ github.actor }}, 工作流: \`${{ github.workflow }}\`*`;
+          *執行路徑: \`./${{ matrix.path }}\`*`;
             
           github.rest.issues.createComment({
             issue_number: context.issue.number,
@@ -85,4 +153,4 @@ jobs:
     # 5. Terraform Apply
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve tfplan
+      run: terraform apply -auto-approve
