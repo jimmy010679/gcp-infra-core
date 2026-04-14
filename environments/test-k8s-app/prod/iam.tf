@@ -1,9 +1,9 @@
 # 授予 test-k8s-app SA 操作 GKE 的權限
 resource "google_project_iam_member" "sa_test_k8s_app_roles" {
   for_each = toset([
-    "roles/container.developer",    # 必備：允許部署 Deployment/Service
-    "roles/artifactregistry.reader", # 必備：允許從 GAR 拉取 Image
-    "roles/browser"                 # 選配：方便在 Console 查看資源
+    "roles/container.developer",     # 允許部署 Deployment/Service
+    "roles/artifactregistry.writer", # 允許推播鏡像，不允許刪除儲存庫
+    "roles/browser"                  # 方便在 Console 查看資源
   ])
   
   project = var.test_k8s_app_project_id
