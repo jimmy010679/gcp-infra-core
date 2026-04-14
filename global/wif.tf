@@ -19,7 +19,8 @@ locals {
   # =============================================================
   serverless_services = [
     "run.googleapis.com", 
-    "aiplatform.googleapis.com"
+    "aiplatform.googleapis.com", 
+    "artifactregistry.googleapis.com"
   ]
 
   # =============================================================
