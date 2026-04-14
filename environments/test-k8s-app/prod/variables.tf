@@ -1,3 +1,8 @@
+# jimmy-infra-admin 相關配置
+variable "jimmy_infra_admin_project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
 variable "test_k8s_app_project_id" {
   description = "GCP Project ID"
   type        = string

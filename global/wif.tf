@@ -3,11 +3,32 @@
 # ====================================================================================
 
 locals {
+
+  # =============================================================
+  # 1. 基礎設施核心 (The Foundation) - 每個專案啟動時的最低門檻
+  # =============================================================
   base_services = [
-    "iam.googleapis.com",                 # 【身分定義】管理服務帳號 (SA) 與角色權限
-    "iamcredentials.googleapis.com",      # 【認證核心】支援 WIF 換票，實作 GitHub Actions 無密鑰登入
-    "serviceusage.googleapis.com",        # 【功能開關】讓 Terraform 具備啟動/禁用其他 GCP API 的能力
-    "cloudresourcemanager.googleapis.com" # 【專案入口】基礎設施管理總入口，允許修改專案層級 IAM 綁定與元數據
+    "iam.googleapis.com",                  # 【身分定義】管理服務帳號 (SA) 與角色權限
+    "iamcredentials.googleapis.com",       # 【認證核心】支援 WIF 換票，實作 GitHub Actions 無密鑰登入
+    "serviceusage.googleapis.com",         # 【功能開關】讓 Terraform 具備啟動/禁用其他 GCP API 的能力
+    "cloudresourcemanager.googleapis.com", # 【專案入口】基礎設施管理總入口，允許修改專案層級 IAM 綁定與元數據
+  ]
+
+  # =============================================================
+  # 2. Serverless 輕量化組件 (Serverless Stack) - 適用於 Cloud Run
+  # =============================================================
+  serverless_services = [
+    "run.googleapis.com", 
+    "aiplatform.googleapis.com"
+  ]
+
+  # =============================================================
+  # 3. 容器編排重裝組件 (GKE Stack) - 適用於高複雜度、分散式架構專案
+  # =============================================================
+  gke_services = [
+    "container.googleapis.com", 
+    "compute.googleapis.com", 
+    "artifactregistry.googleapis.com"
   ]
 }
 
@@ -21,7 +42,9 @@ resource "google_project_service" "admin_base_services" {
 
 # ai-code-review 啟動應用專案 API
 resource "google_project_service" "ai_code_review_base_services" {
-  for_each = toset(local.base_services)
+  # 合併 base 與 serverless 清單
+  for_each = toset(concat(local.base_services, local.serverless_services))
+
   project  = var.ai_code_review_project_id
   service  = each.key
   disable_on_destroy = false
@@ -29,7 +52,9 @@ resource "google_project_service" "ai_code_review_base_services" {
 
 # test-k8s-app 啟動應用專案 API
 resource "google_project_service" "test_k8s_app_base_services" {
-  for_each = toset(local.base_services)
+  # 合併 base 與 gke 清單 (解決你之前的 403 錯誤)
+  for_each = toset(concat(local.base_services, local.gke_services))
+  
   project  = var.test_k8s_app_project_id
   service  = each.key
   disable_on_destroy = false
@@ -218,15 +243,3 @@ resource "google_project_iam_member" "sa_gcp_infra_core_roles" {
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
-
-# [專案權限] 授予 test-k8s-app 服務帳號 GKE 部署權限
-resource "google_project_iam_member" "sa_test_k8s_app_roles" {
-  for_each = toset([
-    "roles/container.developer", # 允许部署 K8s 资源
-    "roles/container.clusterViewer" # 允许查看集群狀態
-  ])
-  project = var.test_k8s_app_project_id
-  role    = each.key
-  member  = "serviceAccount:${google_service_account.sa_test_k8s_app.email}"
-}
-
