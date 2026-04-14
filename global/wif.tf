@@ -54,7 +54,7 @@ resource "google_project_service" "ai_code_review_base_services" {
 resource "google_project_service" "test_k8s_app_base_services" {
   # 合併 base 與 gke 清單 (解決你之前的 403 錯誤)
   for_each = toset(concat(local.base_services, local.gke_services))
-  
+
   project  = var.test_k8s_app_project_id
   service  = each.key
   disable_on_destroy = false
@@ -217,14 +217,28 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_service_access
 }
 
 # [跨專案管理] 授予 Infra SA 對 ai-code-review 應用專案的資源管理權 (使其能實際部署與操作 Cloud Run/GAR 等資源)
-resource "google_project_iam_member" "sa_infra_core_resource_admin" {
+resource "google_project_iam_member" "infra_admin_ai_review" {
+  for_each = toset([
+    "roles/artifactregistry.repoAdmin",  # 管理/讀取 GAR 儲存庫
+    "roles/run.admin",                   # 管理/讀取 Cloud Run 服務
+    "roles/browser"                      # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+  ])
+  
+  project = var.ai_code_review_project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
+# [跨專案管理] 授予 Infra SA 對 test-k8s-app 的管理權限 (GKE Stack)
+resource "google_project_iam_member" "infra_admin_test_k8s" {
   for_each = toset([
     "roles/artifactregistry.repoAdmin", # 管理/讀取 GAR 儲存庫
-    "roles/run.admin",                  # 管理/讀取 Cloud Run 服務
+    "roles/compute.networkAdmin",       # 解決網路 403
+    "roles/container.admin",            # 解決 GKE 403
     "roles/browser"                     # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
   ])
   
-  project = var.ai_code_review_project_id # 目標專案：ai-code-review
+  project = var.test_k8s_app_project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }
