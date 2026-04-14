@@ -24,10 +24,9 @@ variable "ip_range" {
   default     = "10.0.0.0/24"
 }
 
-variable "static_ip_prefix" {
-  description = "靜態 IP 的命名前綴"
+variable "resource_prefix" {
+  description = "資源命名的前綴，用於區分不同的專案或應用"
   type        = string
-  default     = "test-k8s-static-ip"
 }
 
 variable "static_ip_envs" {

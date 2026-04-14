@@ -10,6 +10,6 @@ module "network" {
   subnet_name = "${var.test_k8s_app_app_name}-subnet"
   ip_range    = "10.10.0.0/24" # 为 K8s 分配的網段
   
-  static_ip_prefix = "test-k8s-app-ip" 
+  resource_prefix = "test-k8s-app"
   static_ip_envs   = ["prod", "uat", "dev"]
 }

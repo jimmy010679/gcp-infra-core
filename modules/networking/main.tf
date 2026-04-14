@@ -39,7 +39,7 @@ resource "google_compute_global_address" "ingress_ips" {
   for_each = toset(var.static_ip_envs)
 
   project      = var.project_id
-  name         = "${var.static_ip_prefix}-${each.key}"
+  name         = "${var.resource_prefix}-static-ip-${each.key}" # 組合方式：前綴-static-ip-環境名
   address_type = "EXTERNAL"
   ip_version   = "IPV4"
 }
