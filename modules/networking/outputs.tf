@@ -17,3 +17,10 @@ output "subnet_name" {
   description = "子網名稱"
   value       = google_compute_subnetwork.subnet.name
 }
+
+output "static_ips" {
+  description = "每個環境對應的全球靜態 IP 地址"
+  value = {
+    for k, v in google_compute_global_address.ingress_ips : k => v.address
+  }
+}

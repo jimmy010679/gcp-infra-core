@@ -23,3 +23,15 @@ variable "ip_range" {
   type        = string
   default     = "10.0.0.0/24"
 }
+
+variable "static_ip_prefix" {
+  description = "靜態 IP 的命名前綴"
+  type        = string
+  default     = "test-k8s-static-ip"
+}
+
+variable "static_ip_envs" {
+  description = "需要建立靜態 IP 的環境清單"
+  type        = list(string)
+  default     = ["prod", "uat", "dev"]
+}

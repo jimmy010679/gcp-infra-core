@@ -4,10 +4,12 @@ module "network" {
   count       = var.enable_k8s_infrastructure ? 1 : 0
 
   source      = "../../../modules/networking"
-
   project_id  = var.test_k8s_app_project_id
   region      = var.region
   vpc_name    = "${var.test_k8s_app_app_name}-vpc"
   subnet_name = "${var.test_k8s_app_app_name}-subnet"
   ip_range    = "10.10.0.0/24" # 为 K8s 分配的網段
+  
+  static_ip_prefix = "test-k8s-app-ip" 
+  static_ip_envs   = ["prod", "uat", "dev"]
 }
