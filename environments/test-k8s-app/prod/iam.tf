@@ -2,7 +2,7 @@
 resource "google_project_iam_member" "sa_test_k8s_app_roles" {
   for_each = toset([
     "roles/container.developer",       # 允許部署 Deployment/Service
-    "roles/artifactregistry.writer",   # 允許推播鏡像，不允許刪除儲存庫
+    "roles/artifactregistry.admin",    # 允許管理鏡像
     "roles/compute.networkUser",       # 允許使用 VPC 與 IP 資源 
     "roles/compute.loadBalancerAdmin", # 允許 GKE 控制器操作外部 Load Balancer
     "roles/browser"                    # 方便在 Console 查看資源
