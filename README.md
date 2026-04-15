@@ -54,8 +54,8 @@
 │       └── prod/           # 生產環境配置 (GKE, Artifact Registry)
 ├── global/                 # 全域共用資源 (WIF, IAM)
 ├── modules/                # 可重複使用的模組
-│   ├── cloud-run-app/      # Cloud Run 模組
-│   └── networking/         # 網路相關模組
+│   ├── gke-networking/     # 為 GKE 量身打造的 VPC、Subnet、NAT 與 IP
+│   ├── cloud-run-app/      # Cloud Run 模組 (未來)
 └── README.md
 ```
 
