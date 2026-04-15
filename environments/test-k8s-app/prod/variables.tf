@@ -1,3 +1,8 @@
+variable "env" {
+  description = "目前的環境名稱 (e.g., prod, uat, dev)"
+  type        = string
+}
+
 # jimmy-infra-admin 相關配置
 variable "jimmy_infra_admin_project_id" {
   description = "GCP Project ID"

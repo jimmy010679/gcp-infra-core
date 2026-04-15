@@ -2,7 +2,9 @@ resource "google_container_cluster" "primary" {
   # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
   count    = var.enable_k8s_infrastructure ? 1 : 0
 
-  name     = "${var.test_k8s_app_app_name}-cluster"
+  # 使用環境變數命名，確保 叢集 獨立
+  name     = "${var.test_k8s_app_app_name}-${var.env}-cluster"
+
   location = var.region
   project  = var.test_k8s_app_project_id
 

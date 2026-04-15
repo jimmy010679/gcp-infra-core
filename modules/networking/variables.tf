@@ -28,9 +28,3 @@ variable "resource_prefix" {
   description = "資源命名的前綴，用於區分不同的專案或應用"
   type        = string
 }
-
-variable "static_ip_envs" {
-  description = "需要建立靜態 IP 的環境清單"
-  type        = list(string)
-  default     = ["prod", "uat", "dev"]
-}

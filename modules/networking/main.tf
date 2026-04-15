@@ -35,11 +35,10 @@ resource "google_compute_router_nat" "nat" {
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
 
-resource "google_compute_global_address" "ingress_ips" {
-  for_each = toset(var.static_ip_envs)
-
+# 建立 全球靜態IP
+resource "google_compute_global_address" "ingress_ip" {
   project      = var.project_id
-  name         = "${var.resource_prefix}-static-ip-${each.key}" # 組合方式：前綴-static-ip-環境名
+  name         = "${var.resource_prefix}-static-ip"
   address_type = "EXTERNAL"
   ip_version   = "IPV4"
 }

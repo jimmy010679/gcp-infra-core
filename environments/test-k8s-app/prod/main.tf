@@ -6,10 +6,14 @@ module "network" {
   source      = "../../../modules/networking"
   project_id  = var.test_k8s_app_project_id
   region      = var.region
-  vpc_name    = "${var.test_k8s_app_app_name}-vpc"
-  subnet_name = "${var.test_k8s_app_app_name}-subnet"
-  ip_range    = "10.10.0.0/24" # 为 K8s 分配的網段
+
+  # 使用環境變數命名，確保 VPC 獨立
+  vpc_name    = "${var.test_k8s_app_app_name}-${var.env}-vpc"
+  subnet_name = "${var.test_k8s_app_app_name}-${var.env}-subnet"
+
+  # 每個環境建議分配不同的網段，避免未來做 VPC Peering 時衝突
+  # prod: 10.10.0.0/24, uat: 10.20.0.0/24, dev: 10.30.0.0/24
+  ip_range    = var.env == "prod" ? "10.10.0.0/24" : (var.env == "uat" ? "10.20.0.0/24" : "10.30.0.0/24")
   
-  resource_prefix = "test-k8s-app"
-  static_ip_envs   = ["prod", "uat", "dev"]
+  resource_prefix = "${var.test_k8s_app_app_name}-${var.env}"
 }

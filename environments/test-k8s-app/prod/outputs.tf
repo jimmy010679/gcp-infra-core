@@ -19,8 +19,8 @@ output "artifact_registry_repo_url" {
 }
 
 # 輸出各環境的靜態 IP (透過模組轉手輸出)# 輸出各環境的靜態 IP (透過模組轉手輸出)
-output "static_ips" {
+output "static_ip" {
   description = "每個環境對應的全球靜態 IP 地址，請將這些 IP 填入 A 紀錄"
   # 由於你的 module 使用了 count，所以需要用 [0] 存取
-  value       = var.enable_k8s_infrastructure ? module.network[0].static_ips : {}
+  value       = var.enable_k8s_infrastructure ? module.network[0].static_ip : null
 }

@@ -51,7 +51,7 @@
 │   └── ai-code-review/
 │       └── prod/           # 生產環境配置 (Cloud Run, Artifact Registry)
 │   └── test-k8s-app/
-│       └── prod/           # 生產環境配置
+│       └── prod/           # 生產環境配置 (GKE, Artifact Registry)
 ├── global/                 # 全域共用資源 (WIF, IAM)
 ├── modules/                # 可重複使用的模組
 │   ├── cloud-run-app/      # Cloud Run 模組
@@ -67,3 +67,14 @@
 | :--- | :--- | :--- |
 | **Variables** | `GCP_WIF_PROVIDER` | WIF Provider 完整路徑 |
 | **Variables** | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
+
+
+## 💻 應用程式專案
+
+### 1. **[ai-code-review](https://github.com/jimmy010679/ai-code-review)**
+
+架在 Cloud Run 上面的 Next.js
+
+### 2. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
+
+架在 GKE 上面的 Next.js
