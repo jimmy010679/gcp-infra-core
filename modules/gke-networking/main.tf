@@ -31,8 +31,12 @@ resource "google_compute_router_nat" "nat" {
   router                             = google_compute_router.router.name
   region                             = var.region
   project                            = var.project_id
-  nat_ip_allocate_option             = "AUTO_ONLY"
+  nat_ip_allocate_option             = "AUTO_ONLY" # 私有網路發出的公網 IP
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+  enable_dynamic_port_allocation = true  # 啟用動態埠分配
+  min_ports_per_vm               = 64
+  max_ports_per_vm               = 2048
 }
 
 # 建立 全球靜態IP
