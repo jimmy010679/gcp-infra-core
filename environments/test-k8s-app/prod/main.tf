@@ -16,4 +16,7 @@ module "network" {
   ip_range    = var.env == "prod" ? "10.10.0.0/24" : (var.env == "uat" ? "10.20.0.0/24" : "10.30.0.0/24")
   
   resource_prefix = "${var.test_k8s_app_app_name}-${var.env}"
+
+  # Cloud NAT IP數量 (連外網IP數量)
+  nat_ip_count    = 1
 }

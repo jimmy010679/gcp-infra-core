@@ -28,3 +28,9 @@ variable "resource_prefix" {
   description = "資源命名的前綴，用於區分不同的專案或應用"
   type        = string
 }
+
+variable "nat_ip_count" {
+  description = "Cloud NAT 連外網手動IP數量"
+  type        = number
+  default     = 1
+}

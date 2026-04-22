@@ -25,18 +25,31 @@ resource "google_compute_router" "router" {
   project = var.project_id
 }
 
+# 建立 靜態 IP (有網路發出的公網 IP)
+resource "google_compute_address" "nat_ips" {
+  count  = var.nat_ip_count
+  name   = "${var.vpc_name}-nat-ip-${count.index}"
+  region = var.region
+}
+
 # 建立 Cloud NAT (讓 K8s 節點可以安全地存取外部網路抓取套件)
 resource "google_compute_router_nat" "nat" {
   name                               = "${var.vpc_name}-nat"
   router                             = google_compute_router.router.name
   region                             = var.region
   project                            = var.project_id
-  nat_ip_allocate_option             = "AUTO_ONLY" # 私有網路發出的公網 IP
+
+  # 私有網路發出的公網 IP
+  nat_ip_allocate_option             = "MANUAL_ONLY" # "AUTO_ONLY" or "MANUAL_ONLY" (需搭配nat_ips)
+  
+  # 綁定上面建立的 IP
+  nat_ips                            = google_compute_address.nat_ips[*].self_link
+
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 
-  enable_dynamic_port_allocation = true  # 啟用動態埠分配
-  min_ports_per_vm               = 64
-  max_ports_per_vm               = 2048
+  enable_dynamic_port_allocation     = true  # 啟用動態埠分配
+  min_ports_per_vm                   = 64
+  max_ports_per_vm                   = 32768 # AUTO_ONLY=2048, MANUAL_ONLY=32768
 }
 
 # 建立 全球靜態IP
