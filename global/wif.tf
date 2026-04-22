@@ -236,7 +236,8 @@ resource "google_project_iam_member" "infra_admin_test_k8s" {
     "roles/artifactregistry.repoAdmin", # 管理/讀取 GAR 儲存庫
     "roles/compute.networkAdmin",       # 解決網路 403
     "roles/container.admin",            # 解決 GKE 403
-    "roles/browser"                     # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+    "roles/browser",                    # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+    "roles/monitoring.editor"           # 管理監控資源
   ])
   
   project = var.test_k8s_app_project_id
