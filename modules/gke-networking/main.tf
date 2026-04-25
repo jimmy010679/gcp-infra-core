@@ -49,7 +49,7 @@ resource "google_compute_router_nat" "nat" {
 
   enable_dynamic_port_allocation     = true  # 啟用動態埠分配
   min_ports_per_vm                   = 64
-  max_ports_per_vm                   = 32768 # AUTO_ONLY=2048, MANUAL_ONLY=32768
+  max_ports_per_vm                   = 2048
 }
 
 # 建立 全球靜態IP
