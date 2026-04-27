@@ -48,14 +48,16 @@
 ```text
 .
 ├── environments/           # 環境特定配置
-│   └── ai-code-review/
-│       └── prod/           # 生產環境配置 (Cloud Run, Artifact Registry)
+│   ├── ai-code-review/
+│   │   └── prod/           # Cloud Run, Artifact Registry
 │   └── test-k8s-app/
-│       └── prod/           # 生產環境配置 (GKE, Artifact Registry)
+│       └── prod/           # GKE, Cloud SQL (PSC 連線), Artifact Registry
 ├── global/                 # 全域共用資源 (WIF, IAM)
 ├── modules/                # 可重複使用的模組
-│   ├── gke-networking/     # 為 GKE 量身打造的 VPC、Subnet、NAT 與 IP
-│   ├── cloud-run-app/      # Cloud Run 模組 (未來)
+│   ├── gke-networking/     # App VPC (含 NAT, Subnet, Ingress)
+│   ├── data-vpc/           # Data VPC (極簡私有網路, 隔離用)
+│   ├── cloud-sql/          # Cloud SQL (採用 PSC 配置)
+│   └── cloud-run-app/      # Cloud Run 模組
 └── README.md
 ```
 
@@ -73,8 +75,13 @@
 
 ### 1. **[ai-code-review](https://github.com/jimmy010679/ai-code-review)**
 
-架在 Cloud Run 上面的 Next.js
+架在 Cloud Run 上面的 Next.js 應用
 
 ### 2. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
 
-架在 GKE 上面的 Next.js
+架在 GKE 上的 Next.js 應用，採用多 VPC 分層架構存取 Cloud SQL。
+
+#### 網路架構分層 (Multi-VPC Architecture)
+* **App VPC**：專注於 GKE 叢集與對外服務的網路運作（含 Cloud NAT/Router）。
+* **Data VPC**：高度隔離的私有網路，專門託管 Cloud SQL 等敏感數據服務。
+* **Private Service Connect (PSC)**：跨 VPC 服務串接的核心，確保應用程式能以最安全的端點方式存取資料庫，同時保持網路層的完全隔離。

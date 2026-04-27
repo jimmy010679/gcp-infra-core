@@ -5,7 +5,8 @@ resource "google_project_iam_member" "sa_test_k8s_app_roles" {
     "roles/artifactregistry.admin",    # 允許管理鏡像
     "roles/compute.networkUser",       # 允許使用 VPC 與 IP 資源 
     "roles/compute.loadBalancerAdmin", # 允許 GKE 控制器操作外部 Load Balancer
-    "roles/browser"                    # 方便在 Console 查看資源
+    "roles/browser",                   # 方便在 Console 查看資源
+    "roles/cloudsql.client"            # 僅允許 Cloud SQL 連線，不允許管理 Cloud SQL 實例
   ])
   
   project = var.test_k8s_app_project_id

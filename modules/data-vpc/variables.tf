@@ -1,0 +1,25 @@
+variable "project_id" {
+  description = "GCP 專案 ID"
+  type        = string
+}
+
+variable "region" {
+  description = "部署區域"
+  type        = string
+}
+
+variable "vpc_name" {
+  description = "VPC 網路名稱"
+  type        = string
+}
+
+variable "subnet_name" {
+  description = "子網名稱"
+  type        = string
+}
+
+variable "ip_range" {
+  description = "子網 IP 範圍 (例如 10.0.0.0/24)"
+  type        = string
+  default     = "10.0.0.0/24"
+}

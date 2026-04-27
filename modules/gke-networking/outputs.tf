@@ -27,3 +27,8 @@ output "nat_name" {
   description = "Cloud NAT 名稱"
   value = google_compute_router_nat.nat.name
 }
+
+output "vpc_network_id" {
+  description = "VPC 網路的完整 ID (Self Link 或 Resource ID)"
+  value       = google_compute_network.vpc.id
+}

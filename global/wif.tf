@@ -31,6 +31,14 @@ locals {
     "compute.googleapis.com", 
     "artifactregistry.googleapis.com"
   ]
+
+  # =============================================================
+  # 4. Cloud SQL
+  # =============================================================
+  sql_services = [
+    "sqladmin.googleapis.com",
+    "servicenetworking.googleapis.com"
+  ]
 }
 
 # 啟動行政專案 API
@@ -54,7 +62,7 @@ resource "google_project_service" "ai_code_review_base_services" {
 # test-k8s-app 啟動應用專案 API
 resource "google_project_service" "test_k8s_app_base_services" {
   # 合併 base 與 gke 清單 (解決你之前的 403 錯誤)
-  for_each = toset(concat(local.base_services, local.gke_services))
+  for_each = toset(concat(local.base_services, local.gke_services, local.sql_services))
 
   project  = var.test_k8s_app_project_id
   service  = each.key
@@ -233,11 +241,13 @@ resource "google_project_iam_member" "infra_admin_ai_review" {
 # [跨專案管理] 授予 Infra SA 對 test-k8s-app 的管理權限 (GKE Stack)
 resource "google_project_iam_member" "infra_admin_test_k8s" {
   for_each = toset([
-    "roles/artifactregistry.repoAdmin", # 管理/讀取 GAR 儲存庫
-    "roles/compute.networkAdmin",       # 解決網路 403
-    "roles/container.admin",            # 解決 GKE 403
-    "roles/browser",                    # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
-    "roles/monitoring.editor"           # 管理監控資源
+    "roles/artifactregistry.repoAdmin",     # 管理/讀取 GAR 儲存庫
+    "roles/compute.networkAdmin",           # 解決網路 403
+    "roles/container.admin",                # 解決 GKE 403
+    "roles/browser",                        # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+    "roles/monitoring.editor",              # 管理監控資源
+    "roles/cloudsql.admin",                 # 建立、修改、刪除 Cloud SQL 實例
+    "roles/servicenetworking.networksAdmin" # 確保能管理私有服務連線 (PSA)
   ])
   
   project = var.test_k8s_app_project_id

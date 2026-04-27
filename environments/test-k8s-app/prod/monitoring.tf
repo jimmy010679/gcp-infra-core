@@ -8,7 +8,7 @@ resource "google_monitoring_alert_policy" "nat_port_usage_alert" {
     display_name = "NAT Port Usage > 70% of Capacity"
     condition_threshold {
       # 監控 Cloud NAT 的指標 (使用了 count 省錢，所以是network[0])
-      filter = "resource.type=\"nat_gateway\" AND metric.type=\"router.googleapis.com/nat/port_usage\" AND resource.labels.gateway_name=\"${module.network[0].nat_name}\""
+      filter = "resource.type=\"nat_gateway\" AND metric.type=\"router.googleapis.com/nat/port_usage\" AND resource.labels.gateway_name=\"${module.gke_networking[0].nat_name}\""
 
       duration   = "60s" # 持續 60 秒超過閾值才告警，避免瞬間抖動
       comparison = "COMPARISON_GT" # Greater Than

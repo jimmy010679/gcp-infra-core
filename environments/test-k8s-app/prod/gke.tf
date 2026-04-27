@@ -12,12 +12,12 @@ resource "google_container_cluster" "primary" {
   enable_autopilot = true
 
   # 關鍵：引用 Networking 模組的輸出 (因為用了 count 參數，從物件變成陣列)
-  network    = module.network[0].vpc_name
-  subnetwork = module.network[0].subnet_name
+  network    = module.gke_networking[0].vpc_name
+  subnetwork = module.gke_networking[0].subnet_name
 
   # 練習環境建議關閉刪除保護
   deletion_protection = false
 
   # 依賴：確保網路先建好，在建立集群
-  depends_on = [module.network]
+  depends_on = [module.gke_networking]
 }

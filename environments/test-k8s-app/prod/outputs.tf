@@ -8,7 +8,7 @@ output "gke_cluster_name" {
 # 輸出 VPC 名稱 (從模組轉手輸出)
 output "network_name" {
   description = "集群所屬的 VPC 網路"
-  value       = var.enable_k8s_infrastructure ? module.network[0].vpc_name : "Disabled"
+  value       = var.enable_k8s_infrastructure ? module.gke_networking[0].vpc_name : "Disabled"
 }
 
 
@@ -22,5 +22,5 @@ output "artifact_registry_repo_url" {
 output "static_ip" {
   description = "每個環境對應的全球靜態 IP 地址，請將這些 IP 填入 A 紀錄"
   # 由於你的 module 使用了 count，所以需要用 [0] 存取
-  value       = var.enable_k8s_infrastructure ? module.network[0].static_ip : null
+  value       = var.enable_k8s_infrastructure ? module.gke_networking[0].static_ip : null
 }

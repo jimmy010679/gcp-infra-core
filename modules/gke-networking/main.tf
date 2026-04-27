@@ -13,7 +13,7 @@ resource "google_compute_subnetwork" "subnet" {
   network                  = google_compute_network.vpc.id
   project                  = var.project_id
 
-  # 開啟私有 Google 存取，讓沒有公網 IP 的節點也能存取 Artifact Registry
+  # 開啟私有 Google 存取，讓沒有公網 IP 的節點也能存取
   private_ip_google_access = true 
 }
 
