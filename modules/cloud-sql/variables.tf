@@ -9,6 +9,11 @@ variable "project_id" {
   type        = string
 }
 
+variable "vpc_id" {
+  description = "Cloud SQL 要連結的 VPC ID"
+  type        = string
+}
+
 variable "vpc_network_id" {
   description = "Cloud SQL 要連結的 VPC 網路 ID"
   type        = string

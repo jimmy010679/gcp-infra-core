@@ -12,3 +12,8 @@ output "instance_connection_name" {
   description = "資料庫連線名稱 (用於 Cloud SQL Auth Proxy)"
   value       = google_sql_database_instance.postgres.connection_name
 }
+
+output "db_password_secret_id" {
+  description = "Secret ID 給 K8s 或應用端使用"
+  value = google_secret_manager_secret.db_password.id
+}

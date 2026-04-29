@@ -15,6 +15,7 @@ module "gke_networking" {
   # prod: 10.10.0.0/24, uat: 10.20.0.0/24, dev: 10.30.0.0/24
   ip_range        = var.env == "prod" ? "10.10.0.0/24" : (var.env == "uat" ? "10.20.0.0/24" : "10.30.0.0/24")
   
+  # 資源命名的前綴，用於區分不同的專案或應用
   resource_prefix = "${var.test_k8s_app_app_name}-${var.env}"
 
   # Cloud NAT IP數量 (連外網IP數量)
@@ -44,7 +45,13 @@ module "cloud_sql" {
   project_id        = var.test_k8s_app_project_id
   region            = var.region
 
+  vpc_id            = module.data_vpc[0].vpc_id
   vpc_network_id    = module.data_vpc[0].vpc_network_id # 串接網路模組輸出的 VPC ID
-  reserved_ip_range = "prod-sql-ip-range" # IP 範圍名稱
+  reserved_ip_range = "${var.test_k8s_app_app_name}-${var.env}-sql-ip-range" # IP 範圍名稱
   db_instance_name  = "${var.test_k8s_app_app_name}-${var.env}-db"
+
+  depends_on        = [
+    google_project_service.servicenetworking, # 等待啟用 API (servicenetworking.googleapis.com)
+    module.data_vpc
+  ]
 }

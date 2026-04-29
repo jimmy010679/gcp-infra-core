@@ -1,5 +1,5 @@
 # ====================================================================================
-# 0. 啟動基礎設施核心 API (專案基石 API，建議所有環境均開啟)
+# 0. 啟動基礎設施 服務開關 API (專案基石 API，建議所有環境均開啟)
 # ====================================================================================
 
 locals {
@@ -11,33 +11,34 @@ locals {
     "iam.googleapis.com",                  # 【身分定義】管理服務帳號 (SA) 與角色權限
     "iamcredentials.googleapis.com",       # 【認證核心】支援 WIF 換票，實作 GitHub Actions 無密鑰登入
     "serviceusage.googleapis.com",         # 【功能開關】讓 Terraform 具備啟動/禁用其他 GCP API 的能力
-    "cloudresourcemanager.googleapis.com", # 【專案入口】基礎設施管理總入口，允許修改專案層級 IAM 綁定與元數據
+    "cloudresourcemanager.googleapis.com", # 【資源管理】基礎設施管理總入口，允許修改專案層級 IAM 綁定與元數據
   ]
 
   # =============================================================
   # 2. Serverless 輕量化組件 (Serverless Stack) - 適用於 Cloud Run
   # =============================================================
   serverless_services = [
-    "run.googleapis.com", 
-    "aiplatform.googleapis.com", 
-    "artifactregistry.googleapis.com"
+    "run.googleapis.com",                  # 【容器託管】執行 Cloud Run 服務
+    "aiplatform.googleapis.com",           #
+    "artifactregistry.googleapis.com"      # 【映像檔儲存】存放與管理 Docker Container 映像檔
   ]
 
   # =============================================================
   # 3. 容器編排重裝組件 (GKE Stack) - 適用於高複雜度、分散式架構專案
   # =============================================================
   gke_services = [
-    "container.googleapis.com", 
-    "compute.googleapis.com", 
-    "artifactregistry.googleapis.com"
+    "container.googleapis.com",             # 【GKE核心】建立與管理 Kubernetes 叢集
+    "compute.googleapis.com",               # 【計算資源】提供 VM 節點與網路基礎設施
+    "artifactregistry.googleapis.com"       # 【映像檔儲存】用於存放 GKE 所需的容器映像檔
   ]
 
   # =============================================================
   # 4. Cloud SQL
   # =============================================================
   sql_services = [
-    "sqladmin.googleapis.com",
-    "servicenetworking.googleapis.com"
+    "sqladmin.googleapis.com",              # 【資料庫管理】建立與維護 Cloud SQL 實例
+    "servicenetworking.googleapis.com",     # 【網路互連】建立 VPC Private Service Access 連線
+    "secretmanager.googleapis.com"          # 【安全機制】託管應用程式的加密金鑰與資料庫帳密
   ]
 }
 

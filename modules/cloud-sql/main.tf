@@ -12,15 +12,23 @@ resource "google_service_networking_connection" "private_vpc_connection" {
   network                 = var.vpc_network_id
   service                 = "servicenetworking.googleapis.com"
   reserved_peering_ranges = [google_compute_global_address.private_ip_alloc.name]
+
+  depends_on = [
+    google_compute_global_address.private_ip_alloc
+  ]
 }
+
 
 # 3. Cloud SQL 實例綁定依賴
 resource "google_sql_database_instance" "postgres" {
-  name             = "prod-db-instance"
+  name             = var.db_instance_name
   database_version = "POSTGRES_15"
   region           = var.region
 
-  depends_on = [google_service_networking_connection.private_vpc_connection]
+  depends_on = [
+    google_compute_global_address.private_ip_alloc,
+    google_service_networking_connection.private_vpc_connection
+  ]
 
   settings {
     tier = "db-custom-2-7680"

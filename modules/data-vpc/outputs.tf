@@ -1,3 +1,7 @@
+output "vpc_id" {
+  value = google_compute_network.data_vpc.id
+}
+
 output "vpc_network_id" {
   value = google_compute_network.data_vpc.id
 }
