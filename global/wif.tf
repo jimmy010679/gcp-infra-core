@@ -192,8 +192,8 @@ resource "google_project_iam_member" "remote_storage_access" {
 }
 
 # [跨專案權限] 允許 gcp-infra-core 專案的 SA 管理 test-k8s-app 專屬 Bucket
-resource "google_storage_bucket_iam_member" "test_k8s_bucket_access" {
-  bucket = "jimmy-test-k8s-env-bucket"
+resource "google_storage_bucket_iam_member" "test_k8s_app_bucket_access" {
+  bucket = "test-k8s-app-env-bucket"
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }

@@ -1,12 +1,12 @@
 # ====================================================================================
 # 
-# gs://jimmy-test-k8s-env-bucket/
+# gs://test-k8s-app-env-bucket/
 # ├── prod/.env
 # ├── uat/.env
 # └── dev/.env
 # ====================================================================================
 resource "google_storage_bucket" "test_k8s_bucket" {
-  name          = "jimmy-test-k8s-env-bucket"
+  name          = "test-k8s-app-env-bucket"
   location      = var.region
   storage_class = "STANDARD"
 
@@ -16,7 +16,7 @@ resource "google_storage_bucket" "test_k8s_bucket" {
   }
 
   # 刪除保護機制 (非必要練習可關閉，正式環境建議開啟)
-  force_destroy               = false
+  force_destroy               = true
   uniform_bucket_level_access = true
 
   # 生命週期設定 (保留舊版本)
