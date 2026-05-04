@@ -191,30 +191,12 @@ resource "google_project_iam_member" "remote_storage_access" {
   member  = "serviceAccount:${each.key}"
 }
 
-# [精細化權限] 允許 gcp-infra-core 專案專用的 SA 管理指定的 GCS 路徑
-resource "google_project_iam_member" "restrict_storage_test_k8s" {
+resource "google_project_iam_member" "restrict_storage_access" {
   project = var.jimmy_infra_admin_project_id
   role    = "roles/storage.admin"
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
-
-  condition {
-    title       = "allow_test_k8s_app_path"
-    description = "僅允許存取 test-k8s-app 路徑"
-    expression  = "resource.name.startsWith('projects/_/buckets/jimmy-infra-admin-shared-env-bucket/objects/test-k8s-app/')"
-  }
 }
 
-resource "google_project_iam_member" "restrict_storage_ai_review" {
-  project = var.jimmy_infra_admin_project_id
-  role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
-
-  condition {
-    title       = "allow_ai_code_review_path"
-    description = "僅允許存取 ai-code-review 路徑"
-    expression  = "resource.name.startsWith('projects/_/buckets/jimmy-infra-admin-shared-env-bucket/objects/ai-code-review/')"
-  }
-}
 
 # [身分檢視] 允許各專案 Infra SA 讀取行政專案內的 SA 屬性 (避免 TF Plan 時權限不足)
 resource "google_project_iam_member" "sa_self_viewer" {
