@@ -2,11 +2,11 @@
 # 1. Kubernetes Namespace 配置
 # 用途：建立 Pod 與 ServiceAccount 的運行空間，作為所有 K8s 資源的邏輯隔離牆
 # ====================================================================================
-# resource "kubernetes_namespace_v1" "prod" {
-#   metadata {
-#     name = var.env 
-#   }
-# }
+resource "kubernetes_namespace_v1" "prod" {
+  metadata {
+    name = var.env 
+  }
+}
 
 # ====================================================================================
 # 2. Workload Identity 配置 (應用程式身分)
@@ -14,30 +14,30 @@
 # ====================================================================================
 
 # 1. 建立 K8s 端的身分證 (供 Pod 綁定)
-# resource "kubernetes_service_account_v1" "app_sa" {
-#   depends_on = [
-#     kubernetes_namespace_v1.prod,
-#     google_container_cluster.primary
-#   ]
+resource "kubernetes_service_account_v1" "app_sa" {
+  depends_on = [
+    kubernetes_namespace_v1.prod,
+    google_container_cluster.primary
+  ]
 
-#   metadata {
-#     name      = "${var.test_k8s_app_app_name}-${var.env}-sa"
-#     namespace = var.env
-#     annotations = {
-#       # 引用 iam.tf 建立的 SA 的 email
-#       "iam.gke.io/gcp-service-account" = google_service_account.pod_sa.email
-#     }
-#   }
-# }
+  metadata {
+    name      = "${var.test_k8s_app_app_name}-${var.env}-sa"
+    namespace = var.env
+    annotations = {
+      # 引用 iam.tf 建立的 SA 的 email
+      "iam.gke.io/gcp-service-account" = google_service_account.pod_sa.email
+    }
+  }
+}
 
-# # 2. 建立 GCP 端的信任綁定 (Workload Identity 橋樑)
-# resource "google_service_account_iam_member" "workload-identity-binding" {
-#   service_account_id = google_service_account.pod_sa.name
-#   role               = "roles/iam.workloadIdentityUser"
+# 2. 建立 GCP 端的信任綁定 (Workload Identity 橋樑)
+resource "google_service_account_iam_member" "workload-identity-binding" {
+  service_account_id = google_service_account.pod_sa.name
+  role               = "roles/iam.workloadIdentityUser"
 
-#   # 動態參照 app_sa
-#   member             = "serviceAccount:${var.test_k8s_app_project_id}.svc.id.goog[prod/${kubernetes_service_account_v1.app_sa.metadata.0.name}]"
-# }
+  # 動態參照 app_sa
+  member             = "serviceAccount:${var.test_k8s_app_project_id}.svc.id.goog[prod/${kubernetes_service_account_v1.app_sa.metadata.0.name}]"
+}
 
 # ====================================================================================
 # 3. CI/CD 權限配置

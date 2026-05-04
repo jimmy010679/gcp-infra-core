@@ -20,4 +20,10 @@ resource "google_container_cluster" "primary" {
 
   # 依賴：確保網路先建好，在建立集群
   depends_on = [module.gke_networking]
+
+
+  # 開啟 GCP Secret Manager
+  secret_manager_config {
+    enabled = true
+  }
 }

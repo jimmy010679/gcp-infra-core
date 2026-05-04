@@ -12,6 +12,7 @@ locals {
     "iamcredentials.googleapis.com",       # 【認證核心】支援 WIF 換票，實作 GitHub Actions 無密鑰登入
     "serviceusage.googleapis.com",         # 【功能開關】讓 Terraform 具備啟動/禁用其他 GCP API 的能力
     "cloudresourcemanager.googleapis.com", # 【資源管理】基礎設施管理總入口，允許修改專案層級 IAM 綁定與元數據
+    "storage.googleapis.com"               # 【儲存核心】建立及管理 GCS Bucket
   ]
 
   # =============================================================
@@ -249,7 +250,8 @@ resource "google_project_iam_member" "infra_admin_test_k8s" {
     "roles/monitoring.editor",               # 管理監控資源
     "roles/cloudsql.admin",                  # 建立、修改、刪除 Cloud SQL 實例
     "roles/servicenetworking.networksAdmin", # 確保能管理私有服務連線 (PSA)
-    "roles/iam.serviceAccountAdmin"          # 讓 Terraform 可以建立、讀取、修改該專案的 SA
+    "roles/iam.serviceAccountAdmin",         # 讓 Terraform 可以建立、讀取、修改該專案的 SA
+    "roles/storage.objectViewer"             # 讀取 GCS 檔案
   ])
   
   project = var.test_k8s_app_project_id
