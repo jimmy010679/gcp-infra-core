@@ -90,7 +90,6 @@ jobs:
       fail-fast: false # 防止單一環境失敗導致其他環境被取消
       matrix:
         path: [
-          'environments/gcp-infra-core',
           'environments/ai-code-review/prod', 
           'environments/test-k8s-app/prod'
         ]

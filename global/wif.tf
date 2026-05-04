@@ -191,13 +191,6 @@ resource "google_project_iam_member" "remote_storage_access" {
   member  = "serviceAccount:${each.key}"
 }
 
-resource "google_project_iam_member" "restrict_storage_access" {
-  project = var.jimmy_infra_admin_project_id
-  role    = "roles/storage.admin"
-  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
-}
-
-
 # [身分檢視] 允許各專案 Infra SA 讀取行政專案內的 SA 屬性 (避免 TF Plan 時權限不足)
 resource "google_project_iam_member" "sa_self_viewer" {
   for_each = toset([
