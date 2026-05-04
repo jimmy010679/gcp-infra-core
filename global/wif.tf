@@ -191,6 +191,14 @@ resource "google_project_iam_member" "remote_storage_access" {
   member  = "serviceAccount:${each.key}"
 }
 
+# [跨專案權限] 允許 gcp-infra-core 專案的 SA 管理 test-k8s-app 專屬 Bucket
+resource "google_storage_bucket_iam_member" "test_k8s_bucket_access" {
+  bucket = "jimmy-test-k8s-env-bucket"
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
+
 # [身分檢視] 允許各專案 Infra SA 讀取行政專案內的 SA 屬性 (避免 TF Plan 時權限不足)
 resource "google_project_iam_member" "sa_self_viewer" {
   for_each = toset([
