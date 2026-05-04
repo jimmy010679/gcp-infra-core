@@ -192,15 +192,27 @@ resource "google_project_iam_member" "remote_storage_access" {
 }
 
 # [精細化權限] 允許 gcp-infra-core 專案專用的 SA 管理指定的 GCS 路徑
-resource "google_project_iam_member" "restrict_storage_access" {
+resource "google_project_iam_member" "restrict_storage_test_k8s" {
   project = var.jimmy_infra_admin_project_id
   role    = "roles/storage.admin"
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 
   condition {
-    title       = "allow_only_specific_app_path"
-    description = "僅允許存取 shared-env-bucket 中專屬於 該專案 的路徑"
-    expression  = "resource.name.matches('^projects/_/buckets/jimmy-infra-admin-shared-env-bucket/objects/(test-k8s-app|ai-code-review)/.*')"
+    title       = "allow_test_k8s_app_path"
+    description = "僅允許存取 test-k8s-app 路徑"
+    expression  = "resource.name.startsWith('projects/_/buckets/jimmy-infra-admin-shared-env-bucket/objects/test-k8s-app/')"
+  }
+}
+
+resource "google_project_iam_member" "restrict_storage_ai_review" {
+  project = var.jimmy_infra_admin_project_id
+  role    = "roles/storage.admin"
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+
+  condition {
+    title       = "allow_ai_code_review_path"
+    description = "僅允許存取 ai-code-review 路徑"
+    expression  = "resource.name.startsWith('projects/_/buckets/jimmy-infra-admin-shared-env-bucket/objects/ai-code-review/')"
   }
 }
 
