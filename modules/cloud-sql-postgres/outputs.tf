@@ -17,3 +17,9 @@ output "db_password_secret_id" {
   description = "Secret ID 給 K8s 或應用端使用"
   value = google_secret_manager_secret.db_password.id
 }
+
+output "db_password_result" {
+  description = "資料庫隨機密碼明文"
+  value       = random_password.db_password.result
+  sensitive   = true # 敏感資訊
+}

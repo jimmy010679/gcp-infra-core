@@ -14,6 +14,6 @@ resource "google_compute_forwarding_rule" "sql_psc_endpoint" {
   network               = module.gke_networking[0].vpc_network_id
   subnetwork            = module.gke_networking[0].subnet_id
   ip_address            = google_compute_address.sql_psc_ip[0].id
-  target                = module.cloud_sql[0].psc_service_attachment_link
+  target                = module.cloud_sql_postgres[0].psc_service_attachment_link
   load_balancing_scheme = "" # 留空代表 PSC
 }

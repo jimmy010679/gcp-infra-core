@@ -24,3 +24,9 @@ output "static_ip" {
   # 由於你的 module 使用了 count，所以需要用 [0] 存取
   value       = var.enable_k8s_infrastructure ? module.gke_networking[0].static_ip : null
 }
+
+output "sql_psc_internal_ip" {
+  description = "Cloud SQL PSC 端點的內部 IP 地址 (用於跳板機連線目標)"
+  # 使用 try 或條件式處理 count = 0 的情況
+  value       = var.enable_k8s_infrastructure ? google_compute_address.sql_psc_ip[0].address : "Disabled"
+}

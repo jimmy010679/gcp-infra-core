@@ -30,8 +30,25 @@ variable "db_instance_name" {
   default     = "prod-db-instance"
 }
 
+variable "postgres_major_version" {
+  description = "PostgreSQL 大版本號 (例如: 13, 14, 15)"
+  type        = string
+  default     = "15"
+}
+
 variable "db_tier" {
   description = "資料庫機器規格"
   type        = string
   default     = "db-custom-2-7680"
+}
+
+variable "db_name" {
+  description = "資料庫名稱：應用程式連線使用的邏輯名稱"
+  default = "test_k8s_app_main"
+}
+
+variable "db_user_name" {
+  description = "資料庫應用程式帳號名稱"
+  type        = string
+  default     = "app_runner" # 設定預設值
 }

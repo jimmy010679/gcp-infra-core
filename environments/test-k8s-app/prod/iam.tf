@@ -11,7 +11,7 @@ resource "google_project_iam_member" "sa_test_k8s_app_roles" {
     "roles/browser",                           # 方便在 Console 查看資源
     "roles/cloudsql.client",                   # 僅允許 Cloud SQL 連線，不允許管理 Cloud SQL 實例
     "roles/storage.objectViewer",              # 讀取 Storage
-    "roles/secretmanager.secretVersionManager" # 允許 CI/CD 更新 Secret 內容版本 (寫入)，但不允許刪除或查看 Secret 設定
+    "roles/secretmanager.viewer"               # 允許 CI/CD 查看 Secret 是否存在 (元數據)，但不允許讀取密碼內容
   ])
   
   project = var.test_k8s_app_project_id

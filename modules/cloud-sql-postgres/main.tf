@@ -22,7 +22,7 @@ resource "google_service_networking_connection" "private_vpc_connection" {
 # 3. Cloud SQL 實例綁定依賴
 resource "google_sql_database_instance" "postgres" {
   name             = var.db_instance_name
-  database_version = "POSTGRES_15"
+  database_version = "POSTGRES_${var.postgres_major_version}" // ex: POSTGRES_15
   region           = var.region
 
   depends_on = [
@@ -31,7 +31,8 @@ resource "google_sql_database_instance" "postgres" {
   ]
 
   settings {
-    tier = "db-custom-2-7680"
+    # 機器規格
+    tier = var.db_tier
 
     # 網路安全：僅允許私有 IP
     ip_configuration {
@@ -53,4 +54,10 @@ resource "google_sql_database_instance" "postgres" {
 
   # true = 防止意外刪除，練習先用false
   deletion_protection = false
+}
+
+# 4. 建立邏輯資料庫
+resource "google_sql_database" "app_db" {
+  name     = var.db_name
+  instance = google_sql_database_instance.postgres.name 
 }

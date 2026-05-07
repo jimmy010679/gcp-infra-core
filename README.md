@@ -8,15 +8,9 @@
 
 ## 🏗 架構設計亮點
 
-### 1. 無密鑰安全認證 (Workload Identity Federation)
-捨棄具資安風險的傳統靜態 JSON Key，採用 **GCP WIF** 實作 Keyless 認證：
-* **OIDC 信任機制**：建立 GitHub 與 Google Cloud 間的信任關係，僅限特定 Repo 換取臨時憑證。
-* **身分與權限分離**：行政專案負責「核發身分」，應用專案負責「執行任務」，達成清晰的權責分界。
-
-### 2. 中心化管理策略 (Centralized Governance)
-* **內政管理 (Self-Management)**：授予管理 SA 在行政專案中的 `iam.workloadIdentityPoolAdmin` 等角色，使其具備維護自身認證體系的能力。
-* **跨專案行政權**：透過 `serviceusage.serviceUsageAdmin` 與 `projectIamAdmin` 讓核心 SA 能跨專案自動開啟 API 並管理成員權限。
-* **遠端狀態鎖定**：所有環境的 Terraform State 均集中存放於 `jimmy-infra-admin` 專案的 GCS Bucket，並實作跨專案存取授權。
+* **無密鑰安全認證 (Keyless Authentication)**：通過全局 Workload Identity Federation (WIF) 模塊，實現 GitHub Actions 與 GCP 的安全認證，徹底消除長期 Access Key 泄漏風險。
+* **網絡隔離與安全通訊 (Network Isolation & PSC)**：採用雙 VPC 架構（App VPC 與 Data VPC）。業務邏輯與數據存儲嚴格物理隔離，GKE 叢集與 Cloud SQL 數據庫之間基於 Private Service Connect (PSC) 實現高安全性的內網連接。
+* **模塊化組件設計 (Modular Design)**：將網絡、數據庫、計算資源封裝為可高度複用的 Terraform 模塊，便於未來快速擴展至新項目或新環境。
 
 ---
 
@@ -47,18 +41,20 @@
 
 ```text
 .
-├── environments/           # 環境特定配置
-│   ├── ai-code-review/
-│   │   └── prod/           # Cloud Run, Artifact Registry
-│   └── test-k8s-app/
-│       └── prod/           # GKE, Cloud SQL (PSC 連線), Artifact Registry
-├── global/                 # 全域共用資源 (WIF, IAM)
-├── modules/                # 可重複使用的模組
-│   ├── gke-networking/     # App VPC (含 NAT, Subnet, Ingress)
-│   ├── data-vpc/           # Data VPC (極簡私有網路, 隔離用)
-│   ├── cloud-sql/          # Cloud SQL (採用 PSC 配置)
-│   └── cloud-run-app/      # Cloud Run 模組
-└── README.md
+├── environments/           # 環境特定配置 (具體項目的實例化)
+│   ├── ai-code-review/     # AI Code Review 項目
+│   │   └── prod/           # 包含 Cloud Run, Artifact Registry 等無服務器部署配置
+│   └── test-k8s-app/       # 測試用 Kubernetes 項目
+│       └── prod/           # 包含 GKE, Cloud SQL (PSC 連接), Artifact Registry
+├── global/                 # 全局公共資源
+│   └──                     # 包含 Workload Identity Federation (WIF), 跨項目 IAM 權限分配等
+├── modules/                # 可複用的核心模塊庫
+│   ├── bastion/            # 跳板機，連到 Database，是用 VM + IAP
+│   ├── gke-networking/     # App VPC 網絡模塊 (涵蓋 NAT, Subnet, Ingress 配置)
+│   ├── data-vpc/           # Data VPC 模塊 (極簡私有網絡，專供數據組件隔離使用)
+│   ├── cloud-sql-postgres/ # Cloud SQL PostgreSQL 模塊 (內置 PSC 配置與安全策略)
+│   └── cloud-run-app/      # Cloud Run 服務模塊 (封裝容器部署標準化參數)
+└── README.md               # 項目說明文檔
 ```
 
 ---

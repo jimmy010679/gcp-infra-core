@@ -13,7 +13,7 @@ resource "kubernetes_namespace_v1" "prod" {
 # 用途：透過 Workload Identity 將 K8s ServiceAccount 映射至 GCP IAM，確保 Pod 運行時能安全存取 Secret Manager 與 Cloud Storage。
 # ====================================================================================
 
-# 1. 建立 K8s 端的身分證 (供 Pod 綁定)
+# 1. 建立 K8s 端的 frontend 身分證 (供 Pod 綁定)
 resource "kubernetes_service_account_v1" "app_sa" {
   depends_on = [
     kubernetes_namespace_v1.prod,
@@ -21,8 +21,8 @@ resource "kubernetes_service_account_v1" "app_sa" {
   ]
 
   metadata {
-    name      = "${var.test_k8s_app_app_name}-${var.env}-sa"
-    namespace = var.env
+    name        = "${var.test_k8s_app_app_name}-frontend-${var.env}-sa" // (test-k8s-app-frontend-prod-sa)
+    namespace   = var.env
     annotations = {
       # 引用 iam.tf 建立的 SA 的 email
       "iam.gke.io/gcp-service-account" = google_service_account.pod_sa.email
