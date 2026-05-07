@@ -9,7 +9,7 @@
 ## 🏗 架構設計亮點
 
 * **無密鑰安全認證 (Keyless Authentication)**：通過全局 Workload Identity Federation (WIF) 模塊，實現 GitHub Actions 與 GCP 的安全認證，徹底消除長期 Access Key 泄漏風險。
-* **網絡隔離與安全通訊 (Network Isolation & PSC)**：採用雙 VPC 架構（App VPC 與 Data VPC）。業務邏輯與數據存儲嚴格物理隔離，GKE 叢集與 Cloud SQL 數據庫之間基於 Private Service Connect (PSC) 實現高安全性的內網連接。
+* **網絡隔離與安全通訊 (Network Isolation & PSC)**：[test-k8s-app](https://github.com/jimmy010679/test-k8s-app) 專案，採用雙 VPC 架構（App VPC 與 Data VPC）。業務邏輯與數據存儲嚴格物理隔離，GKE 叢集與 Cloud SQL 數據庫之間基於 Private Service Connect (PSC) 實現高安全性的內網連接。
 * **模塊化組件設計 (Modular Design)**：將網絡、數據庫、計算資源封裝為可高度複用的 Terraform 模塊，便於未來快速擴展至新項目或新環境。
 
 ---
