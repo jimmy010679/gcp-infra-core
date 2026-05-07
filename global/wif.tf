@@ -45,7 +45,13 @@ locals {
 
 # 啟動行政專案 API
 resource "google_project_service" "admin_base_services" {
-  for_each = toset(local.base_services)
+  for_each = toset(concat(
+    local.base_services,
+    local.serverless_services,
+    local.gke_services,
+    local.sql_services
+  ))
+  
   project  = var.jimmy_infra_admin_project_id
   service  = each.key
   disable_on_destroy = false # 避免刪除 TF 時導致認證系統崩潰
