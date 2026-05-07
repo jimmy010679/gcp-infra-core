@@ -243,15 +243,17 @@ resource "google_project_iam_member" "infra_admin_ai_review" {
 # [跨專案管理] 授予 Infra SA 對 test-k8s-app 的管理權限 (GKE Stack)
 resource "google_project_iam_member" "infra_admin_test_k8s" {
   for_each = toset([
-    "roles/artifactregistry.repoAdmin",      # 管理/讀取 GAR 儲存庫
-    "roles/compute.networkAdmin",            # 解決網路 403
-    "roles/container.admin",                 # 解決 GKE 403
-    "roles/browser",                         # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
-    "roles/monitoring.editor",               # 管理監控資源
-    "roles/cloudsql.admin",                  # 建立、修改、刪除 Cloud SQL 實例
-    "roles/servicenetworking.networksAdmin", # 確保能管理私有服務連線 (PSA)
-    "roles/iam.serviceAccountAdmin",         # 讓 Terraform 可以建立、讀取、修改該專案的 SA
-    "roles/storage.admin",                   # 管理 GCS 檔案
+    "roles/artifactregistry.repoAdmin",       # 管理/讀取 GAR 儲存庫
+    "roles/compute.networkAdmin",             # 解決網路 403
+    "roles/container.admin",                  # 解決 GKE 403
+    "roles/browser",                          # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+    "roles/monitoring.editor",                # 管理監控資源
+    "roles/cloudsql.admin",                   # 建立、修改、刪除 Cloud SQL 實例
+    "roles/servicenetworking.networksAdmin",  # 確保能管理私有服務連線 (PSA)
+    "roles/iam.serviceAccountAdmin",          # 讓 Terraform 可以建立、讀取、修改該專案的 SA
+    "roles/storage.admin",                    # 管理 GCS 檔案
+    "roles/secretmanager.admin",              # 允許 TF 在專案內建立與讀取密鑰 (解決 Secret 403)
+    "roles/serviceusage.serviceUsageConsumer" # 允許 TF 消耗 API 額度 (解決 Cloud SQL API disabled 幽靈報錯)
   ])
   
   project = var.test_k8s_app_project_id
