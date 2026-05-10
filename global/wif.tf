@@ -41,6 +41,17 @@ locals {
     "servicenetworking.googleapis.com",     # 【網路互連】建立 VPC Private Service Access 連線
     "secretmanager.googleapis.com"          # 【安全機制】託管應用程式的加密金鑰與資料庫帳密
   ]
+
+  # =============================================================
+  # 5. 觀測性與維運組件 (Observability & Ops Stack)
+  # =============================================================
+  management_services = [
+    "monitoring.googleapis.com",      # 【監控核心】支援告警策略、指標採集與儀表板 
+    "logging.googleapis.com",         # 【日誌核心】支援應用程式與系統日誌存儲 
+    "backupdr.googleapis.com",        # 【備份容災】集中式安全資料保護機制 
+    "telemetry.googleapis.com",       # 【遙測核心】GKE 託管 OpenTelemetry 的必要 API
+    "cloudtrace.googleapis.com"       # 【追蹤核心】支援分散式鏈路追蹤 (Distributed Tracing)
+  ]
 }
 
 # 啟動行政專案 API
@@ -70,7 +81,12 @@ resource "google_project_service" "ai_code_review_base_services" {
 # test-k8s-app 啟動應用專案 API
 resource "google_project_service" "test_k8s_app_base_services" {
   # 合併 base 與 gke 清單 (解決你之前的 403 錯誤)
-  for_each = toset(concat(local.base_services, local.gke_services, local.sql_services))
+  for_each = toset(concat(
+    local.base_services,
+    local.gke_services,
+    local.sql_services,
+    local.management_services
+  ))
 
   project  = var.test_k8s_app_project_id
   service  = each.key

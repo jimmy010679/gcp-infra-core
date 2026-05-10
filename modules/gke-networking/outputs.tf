@@ -32,3 +32,8 @@ output "vpc_network_id" {
   description = "VPC 網路的完整 ID (Self Link 或 Resource ID)"
   value       = google_compute_network.vpc.id
 }
+
+output "nat_ip_count" {
+  value = var.nat_ip_count
+  description = "傳出 Cloud NAT 所使用的靜態 IP 數量，供監控告警計算閾值"
+}
