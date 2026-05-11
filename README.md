@@ -9,8 +9,7 @@
 ## 🏗 架構設計亮點
 
 * **無密鑰安全認證 (Keyless Authentication)**：通過全局 Workload Identity Federation (WIF) 模塊，實現 GitHub Actions 與 GCP 的安全認證，徹底消除長期 Access Key 泄漏風險。
-* **網絡隔離與安全通訊 (Network Isolation & PSC)**：[test-k8s-app](https://github.com/jimmy010679/test-k8s-app) 專案，採用雙 VPC 架構（App VPC 與 Data VPC）。業務邏輯與數據存儲嚴格物理隔離，GKE 叢集與 Cloud SQL 數據庫之間基於 Private Service Connect (PSC) 實現高安全性的內網連接。
-* **模塊化組件設計 (Modular Design)**：將網絡、數據庫、計算資源封裝為可高度複用的 Terraform 模塊，便於未來快速擴展至新項目或新環境。
+* **模塊化設計 (Modular Design)**：將網絡、資料庫、計算資源封裝為可高度複用的 Terraform 模塊，便於未來快速擴展至新項目或新環境。
 
 ---
 
@@ -37,6 +36,51 @@
 
 ---
 
+## ⚙️ 必備 GitHub 變數設定
+
+| 類型 | 變數名稱 | 說明 |
+| :--- | :--- | :--- |
+| **Variables** | `GCP_WIF_PROVIDER` | WIF Provider 完整路徑 |
+| **Variables** | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
+
+---
+
+這是我為你整理好的 Markdown 語法。這份排版特別強化了 test-k8s-app 的技術深度，將網路、安全與可觀測性三大亮點分層呈現，非常適合放在 GitHub README.md 中展示你的架構能力。
+
+Markdown
+## 💻 旗下應用程式專案
+
+### 1. **[ai-code-review](https://github.com/jimmy010679/ai-code-review)**
+* **部署**：運行於 **Google Cloud Run** 的 Serverless Next.js 應用。
+
+### 2. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
+* **定位**：高可靠、多層隔離的 Kubernetes 應用範例。
+* **部署**：運行於 **Google Kubernetes Engine (GKE)** 叢集。
+
+#### 🌐 深度網路架構 (Networking)
+採用雙 VPC 物理隔離設計，確保「應用服務」與「數據存儲」徹底拆分：
+* **App VPC**：部署 GKE 叢集，配置 Cloud NAT/Router 處理對外通訊。
+* **Data VPC**：專門託管 Cloud SQL (PostgreSQL)，不對公網開放。
+* **Private Service Connect (PSC)**：透過 Google 私有端點技術，實現跨 VPC 的安全內網存取。
+
+#### 🛡️ 安全存取控管 (Security)
+* **無密鑰架構**：全站透過 **WIF (Workload Identity Federation)** 進行身分驗證，徹底消除長期 Access Key 洩漏風險。
+* **IAP 安全隧道**：開發者透過 **Identity-Aware Proxy (IAP)** 跳板機存取資料庫，無需開放 5432 埠口至公網。
+    > **本地端連接指令：**
+    > ```bash
+    > gcloud compute ssh test-k8s-app-prod-bastion \
+    >     --tunnel-through-iap \
+    >     --project test-k8s-app-492717 \
+    >     --zone asia-east1-a \
+    >     -- -L 5432:10.10.0.2:5432 -N
+    > ```
+
+#### 📊 可觀測性
+實作 **Prometheus** 與 **OpenTelemetry**，自動採集指標 (Metrics) 並整合追蹤 (Tracing)，實現從 Gateway 到資料庫的端到端效能視覺化。
+
+
+---
+
 ## 📂 專案結構
 
 ```text
@@ -56,28 +100,3 @@
 │   └── cloud-run-app/      # Cloud Run 服務模塊 (封裝容器部署標準化參數)
 └── README.md               # 項目說明文檔
 ```
-
----
-
-## ⚙️ 必備 GitHub 變數設定
-
-| 類型 | 變數名稱 | 說明 |
-| :--- | :--- | :--- |
-| **Variables** | `GCP_WIF_PROVIDER` | WIF Provider 完整路徑 |
-| **Variables** | `GCP_SERVICE_ACCOUNT` | 部署用的 SA Email |
-
-
-## 💻 應用程式專案
-
-### 1. **[ai-code-review](https://github.com/jimmy010679/ai-code-review)**
-
-架在 Cloud Run 上面的 Next.js 應用
-
-### 2. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
-
-架在 GKE 上的 Next.js 應用，採用多 VPC 分層架構存取 Cloud SQL。
-
-#### 網路架構分層 (Multi-VPC Architecture)
-* **App VPC**：專注於 GKE 叢集與對外服務的網路運作（含 Cloud NAT/Router）。
-* **Data VPC**：高度隔離的私有網路，專門託管 Cloud SQL 等敏感數據服務。
-* **Private Service Connect (PSC)**：跨 VPC 服務串接的核心，確保應用程式能以最安全的端點方式存取資料庫，同時保持網路層的完全隔離。

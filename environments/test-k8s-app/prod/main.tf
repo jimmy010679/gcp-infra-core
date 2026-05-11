@@ -106,19 +106,20 @@ module "bastion" {
 resource "kubernetes_namespace_v1" "prod" {
   # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
   count = var.enable_k8s_infrastructure ? 1 : 0
-  
+
   metadata {
     name = var.env 
   }
 }
 
 # 自動生成 Kubernetes ConfigMap
+# 搭配 deployment.yaml configMapRef
 resource "kubernetes_config_map_v1" "app_config" {
   # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
   count = var.enable_k8s_infrastructure ? 1 : 0
 
   metadata {
-    name      = "${var.test_k8s_app_app_name}-${var.env}-config"
+    name      = "${var.test_k8s_app_app_name}-frontend-${var.env}-config"
     namespace = var.env
   }
 
@@ -131,6 +132,11 @@ resource "kubernetes_config_map_v1" "app_config" {
     DB_NAME          = "${replace(var.test_k8s_app_app_name, "-", "_")}_main" # ex: test_k8s_app_main
     DB_PORT          = "5432"
     DB_PASSWORD_PATH = "/var/secrets/db-password.txt"
+
+    # OpenTelemetry 託管 Collector 端點
+    # 會自動附加 /v1/traces
+    OTEL_EXPORTER_OTLP_ENDPOINT = "http://opentelemetry-collector.gke-managed-otel.svc.cluster.local:4318"
+    TRACE_SAMPLE_RATE           = "0.05" # 採樣率 5%
   }
 
   depends_on = [

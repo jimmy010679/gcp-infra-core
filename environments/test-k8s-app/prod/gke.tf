@@ -51,18 +51,42 @@ resource "google_container_cluster" "primary" {
       "SCHEDULER",           # 調度狀態：Pod 分配是否出現延遲
       "CONTROLLER_MANAGER"   # 控制器狀態：同步資源的效率
     ]
+
+    # Network Observability
+    advanced_datapath_observability_config {
+      enable_metrics = true
+      enable_relay   = true
+    }
     
     # Prometheus 生態 (k8s原生)
     # 定期去拉資料
+    # 文件: https://docs.cloud.google.com/stackdriver/docs/managed-prometheus/setup-managed?hl=zh-tw#gke-autopilot
     managed_prometheus {
       enabled = true # 開啟託管 Prometheus 以採集 /metrics 數據
     }
 
     # OpenTelemetry 生態
     # 定期去推資料
-    # advanced_datapath_observability_config {
-    #   enable_metrics = true # 開啟指標採集
-    #   enable_relay   = true # 開啟GCP代管的 Collector
+    # 開啟 Google 完全代管的 OpenTelemetry Collector
+    # 由於是beta階段，暫且不用 terrafrom 控制，並用 lifecycle 搭配
+    # 文件: https://docs.cloud.google.com/kubernetes-engine/docs/concepts/managed-otel-gke?hl=zh-tw
+    # 
+    # 指令開啟
+    # gcloud beta container clusters update test-k8s-app-prod-cluster \
+    #   --project=test-k8s-app-492717 \
+    #   --managed-otel-scope=COLLECTION_AND_INSTRUMENTATION_COMPONENTS \
+    #   --location=asia-east1
+    # 
+    # 開啟 Google 完全代管的 OpenTelemetry Collector
+    # managed_opentelemetry_config {
+    #   scope = "COLLECTION_AND_INSTRUMENTATION_COMPONENTS"
     # }
+  }
+
+  lifecycle {
+    # 告訴 Terraform：不要管我在外面對這個叢集的監控設定做了什麼修改
+    ignore_changes = [
+      monitoring_config
+    ]
   }
 }

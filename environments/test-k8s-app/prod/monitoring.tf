@@ -3,7 +3,7 @@ resource "google_monitoring_alert_policy" "nat_port_usage_alert" {
   # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
   count = var.enable_k8s_infrastructure ? 1 : 0
 
-  display_name = "Cloud NAT Port Usage High"
+  display_name = "${var.test_k8s_app_app_name} (${var.env}) - Cloud NAT Port Usage High"
   combiner     = "OR"
   conditions {
     display_name = "NAT Port Usage > 80% of Capacity"
@@ -34,13 +34,13 @@ resource "kubernetes_manifest" "nextjs_pod_monitoring" {
     apiVersion = "monitoring.googleapis.com/v1"
     kind       = "PodMonitoring"
     metadata = {
-      name      = "nextjs-app-metrics"
+      name      = "${var.test_k8s_app_app_name}-frontend-${var.env}-metrics"
       namespace = var.env
     }
     spec = {
       selector = {
         matchLabels = {
-          app = "${var.test_k8s_app_app_name}-frontend-${var.env}" # 與 Deployment.yaml Label 一致 (ex: test-k8s-app-frontend-app)
+          app = "${var.test_k8s_app_app_name}-frontend-${var.env}" # 與 Deployment.yaml Label 一致 (ex: test-k8s-app-frontend-prod)
         }
       }
       endpoints = [
