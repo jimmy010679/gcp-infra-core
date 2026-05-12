@@ -56,7 +56,8 @@ module "cloud_sql_postgres" {
   reserved_ip_range       = "${var.test_k8s_app_app_name}-${var.env}-sql-ip-range" # IP 範圍名稱
   db_instance_name        = "${var.test_k8s_app_app_name}-${var.env}-db"
   postgres_major_version  = "15"
-  db_tier                 = "db-custom-2-7680"
+  db_tier                 = "db-g1-small"
+  db_availability_type    = "ZONAL"
   db_name                 = "${replace(var.test_k8s_app_app_name, "-", "_")}_main" # ex: test_k8s_app_main
   db_user_name            = "app_runner"
 

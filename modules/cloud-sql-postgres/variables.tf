@@ -42,6 +42,12 @@ variable "db_tier" {
   default     = "db-custom-2-7680"
 }
 
+variable "db_availability_type" {
+  description = "Cloud SQL 的可用性類型 (ZONAL 或 REGIONAL)"
+  type        = string
+  default     = "ZONAL"
+}
+
 variable "db_name" {
   description = "資料庫名稱：應用程式連線使用的邏輯名稱"
   default = "test_k8s_app_main"

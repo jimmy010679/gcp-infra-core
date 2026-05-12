@@ -34,6 +34,11 @@ resource "google_sql_database_instance" "postgres" {
     # 機器規格
     tier = var.db_tier
 
+    # 可用區
+    # "ZONAL"    = 單機模式
+    # "REGIONAL" = 跨區備援
+    availability_type = "ZONAL"
+
     # 網路安全：僅允許私有 IP
     ip_configuration {
       ipv4_enabled    = false
