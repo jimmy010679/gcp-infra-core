@@ -12,3 +12,8 @@ output "instance_internal_ip" {
   description = "跳板機 VM 的內部 IP 地址"
   value       = google_compute_instance.bastion.network_interface[0].network_ip
 }
+
+output "service_account_email" {
+  description = "跳板機使用的 Service Account Email"
+  value       = google_service_account.bastion_sa.email
+}

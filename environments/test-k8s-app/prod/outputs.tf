@@ -25,8 +25,15 @@ output "static_ip" {
   value       = var.enable_k8s_infrastructure ? module.gke_networking[0].static_ip : null
 }
 
+# 輸出 Cloud SQL PSC 端點的內部 IP 地址
 output "sql_psc_internal_ip" {
   description = "Cloud SQL PSC 端點的內部 IP 地址 (用於跳板機連線目標)"
   # 使用 try 或條件式處理 count = 0 的情況
   value       = var.enable_k8s_infrastructure ? google_compute_address.sql_psc_ip[0].address : "Disabled"
+}
+
+# 輸出 跳板機 SA Email
+output "bastion_service_account_email" {
+  description = "Prod 環境跳板機的 SA Email"
+  value       = var.enable_k8s_infrastructure ? module.bastion[0].service_account_email : "Disabled"
 }

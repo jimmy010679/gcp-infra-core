@@ -1,6 +1,14 @@
 # modules/bastion/main.tf
 
-# 1. 建立跳板機 VM (極小規格以節省成本)
+
+# 1. 建立跳板機專用的 Service Account
+resource "google_service_account" "bastion_sa" {
+  account_id   = "${var.resource_prefix}-sa"
+  display_name = "Bastion Host Service Account"
+  project      = var.project_id
+}
+
+# 2. 建立跳板機 VM (極小規格以節省成本)
 resource "google_compute_instance" "bastion" {
   name         = "${var.resource_prefix}-bastion"
   machine_type = "e2-micro" # 最省錢的規格
@@ -27,9 +35,15 @@ resource "google_compute_instance" "bastion" {
   metadata = {
     enable-oslogin = "TRUE"
   }
+
+  # 將 SA 指派給 VM，並給予基礎的雲端 API 存取權限
+  service_account {
+    email  = google_service_account.bastion_sa.email
+    scopes = ["cloud-platform"]
+  }
 }
 
-# 2. 建立防火牆規則：僅允許 Google IAP 網段存取
+# 3. 建立防火牆規則：僅允許 Google IAP 網段存取
 resource "google_compute_firewall" "allow_iap_ssh" {
   name    = "${var.resource_prefix}-allow-iap-ssh"
   network = var.vpc_id # vpc 的 ID
