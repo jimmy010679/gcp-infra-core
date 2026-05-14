@@ -4,14 +4,20 @@
 # ====================================================================================
 resource "google_project_iam_member" "sa_test_k8s_app_roles" {
   for_each = toset([
-    "roles/container.developer",               # 允許部署 Deployment/Service
-    "roles/artifactregistry.admin",            # 允許管理鏡像
-    "roles/compute.networkUser",               # 允許使用 VPC 與 IP 資源 
-    "roles/compute.loadBalancerAdmin",         # 允許 GKE 控制器操作外部 Load Balancer
-    "roles/browser",                           # 方便在 Console 查看資源
-    "roles/cloudsql.client",                   # 僅允許 Cloud SQL 連線，不允許管理 Cloud SQL 實例
-    "roles/storage.objectViewer",              # 讀取 Storage
-    "roles/secretmanager.viewer"               # 允許 CI/CD 查看 Secret 是否存在 (元數據)，但不允許讀取密碼內容
+    "roles/container.developer",                  # 允許部署 Deployment/Service
+    "roles/artifactregistry.admin",               # 允許管理鏡像
+    "roles/compute.networkUser",                  # 允許使用 VPC 與 IP 資源 
+    "roles/compute.loadBalancerAdmin",            # 允許 GKE 控制器操作外部 Load Balancer
+    "roles/browser",                              # 方便在 Console 查看資源
+    "roles/cloudsql.client",                      # 僅允許 Cloud SQL 連線，不允許管理 Cloud SQL 實例
+    "roles/storage.objectViewer",                 # 讀取 Storage
+    "roles/secretmanager.viewer",                 # 允許 CI/CD 查看 Secret 是否存在 (元數據)，但不允許讀取密碼內容
+
+    # Binary Authorization 流水線簽名與驗證權限
+    "roles/cloudkms.viewer",                      # 對應指令：gcloud kms keys versions list (抓取最新版本號)
+    "roles/cloudkms.signer",                      # 對應功能：允許使用 KMS 進行非對稱數位簽名
+    "roles/binaryauthorization.attestorsViewer",  # 對應指令：gcloud beta container binauthz attestations create (需要讀取 Attestor 資訊)
+    "roles/containeranalysis.notes.attacher",     # 對應功能：允許將剛簽好的證明 (Occurrence) 附加到 Note 上
   ])
   
   project = var.test_k8s_app_project_id

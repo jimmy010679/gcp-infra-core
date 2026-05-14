@@ -4,7 +4,6 @@ resource "google_container_cluster" "primary" {
 
   # 使用環境變數命名，確保 叢集 獨立
   name     = "${var.test_k8s_app_app_name}-${var.env}-cluster"
-
   location = var.region
   project  = var.test_k8s_app_project_id
 
@@ -14,6 +13,11 @@ resource "google_container_cluster" "primary" {
   # 關鍵：引用 Networking 模組的輸出 (因為用了 count 參數，從物件變成陣列)
   network    = module.gke_networking[0].vpc_name
   subnetwork = module.gke_networking[0].subnet_name
+
+  # 開啟 Binary Authorization 二進位授權強制執行 (避免非授權的image被掛載)
+  binary_authorization {
+    evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
+  }
 
   # 練習環境建議關閉刪除保護
   deletion_protection = false

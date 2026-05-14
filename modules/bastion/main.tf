@@ -1,6 +1,3 @@
-# modules/bastion/main.tf
-
-
 # 1. 建立跳板機專用的 Service Account
 resource "google_service_account" "bastion_sa" {
   account_id   = "${var.resource_prefix}-sa"
@@ -39,7 +36,7 @@ resource "google_compute_instance" "bastion" {
   # 將 SA 指派給 VM，並給予基礎的雲端 API 存取權限
   service_account {
     email  = google_service_account.bastion_sa.email
-    scopes = ["cloud-platform"]
+    scopes = ["cloud-platform"] # 設置為 cloud-platform 以便將權限管理完全交給 IAM
   }
 }
 
@@ -60,4 +57,11 @@ resource "google_compute_firewall" "allow_iap_ssh" {
   
   # 僅套用到標記為 bastion-host 的機器
   target_tags   = ["bastion-host"]
+}
+
+# 4. 基礎日誌權限
+resource "google_project_iam_member" "bastion_base_logging" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.bastion_sa.email}"
 }

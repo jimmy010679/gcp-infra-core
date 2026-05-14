@@ -52,6 +52,15 @@ locals {
     "telemetry.googleapis.com",       # 【遙測核心】GKE 託管 OpenTelemetry 的必要 API
     "cloudtrace.googleapis.com"       # 【追蹤核心】支援分散式鏈路追蹤 (Distributed Tracing)
   ]
+
+  # =============================================================
+  # 6. 零信任與容器安全組件 (Security & Compliance Stack)
+  # =============================================================
+  security_services = [
+    "cloudkms.googleapis.com",            # 【加密核心】建立與管理金鑰環及非對稱金鑰以支援數位簽名
+    "binaryauthorization.googleapis.com", # 【准入控制】強制執行二進位授權政策以防禦惡意鏡像部署
+    "containeranalysis.googleapis.com"    # 【元數據庫】儲存與管理容器漏洞掃描報告與簽名證明紀錄
+  ]
 }
 
 # 啟動行政專案 API
@@ -80,12 +89,13 @@ resource "google_project_service" "ai_code_review_base_services" {
 
 # test-k8s-app 啟動應用專案 API
 resource "google_project_service" "test_k8s_app_base_services" {
-  # 合併 base 與 gke 清單 (解決你之前的 403 錯誤)
+  # 合併 base 與 gke 清單
   for_each = toset(concat(
     local.base_services,
     local.gke_services,
     local.sql_services,
-    local.management_services
+    local.management_services,
+    local.security_services
   ))
 
   project  = var.test_k8s_app_project_id
@@ -265,17 +275,22 @@ resource "google_project_iam_member" "infra_admin_ai_review" {
 # [跨專案管理] 授予 Infra SA 對 test-k8s-app 的管理權限 (GKE Stack)
 resource "google_project_iam_member" "infra_admin_test_k8s" {
   for_each = toset([
-    "roles/artifactregistry.repoAdmin",       # 管理/讀取 GAR 儲存庫
-    "roles/compute.networkAdmin",             # 解決網路 403
-    "roles/container.admin",                  # 解決 GKE 403
-    "roles/browser",                          # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
-    "roles/monitoring.editor",                # 管理監控資源
-    "roles/cloudsql.admin",                   # 建立、修改、刪除 Cloud SQL 實例
-    "roles/servicenetworking.networksAdmin",  # 確保能管理私有服務連線 (PSA)
-    "roles/iam.serviceAccountAdmin",          # 讓 Terraform 可以建立、讀取、修改該專案的 SA
-    "roles/storage.admin",                    # 管理 GCS 檔案
-    "roles/secretmanager.admin",              # 允許 TF 在專案內建立與讀取密鑰 (解決 Secret 403)
-    "roles/serviceusage.serviceUsageConsumer" # 允許 TF 消耗 API 額度 (解決 Cloud SQL API disabled 幽靈報錯)
+    "roles/artifactregistry.repoAdmin",         # 管理/讀取 GAR 儲存庫
+    "roles/compute.networkAdmin",               # 解決網路 403
+    "roles/container.admin",                    # 解決 GKE 403
+    "roles/browser",                            # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+    "roles/monitoring.editor",                  # 管理監控資源
+    "roles/cloudsql.admin",                     # 建立、修改、刪除 Cloud SQL 實例
+    "roles/servicenetworking.networksAdmin",    # 確保能管理私有服務連線 (PSA)
+    "roles/iam.serviceAccountAdmin",            # 讓 Terraform 可以建立、讀取、修改該專案的 SA
+    "roles/storage.admin",                      # 管理 GCS 檔案
+    "roles/secretmanager.admin",                # 允許 TF 在專案內建立與讀取密鑰 (解決 Secret 403)
+    "roles/serviceusage.serviceUsageConsumer",  # 允許 TF 消耗 API 額度 (解決 Cloud SQL API disabled 幽靈報錯)
+
+    # # Binary Authorization 流水線簽名與驗證權限
+    "roles/cloudkms.admin",                     # 允許建立與管理 KMS 金鑰環與金鑰
+    "roles/binaryauthorization.admin",          # 允許建立 Attestor 與配置二進位授權政策
+    "roles/containeranalysis.admin",            # 允許建立 Container Analysis Notes
   ])
   
   project = var.test_k8s_app_project_id
