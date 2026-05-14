@@ -10,8 +10,9 @@ terraform {
 }
 
 provider "google" {
-  project = var.test_k8s_app_project_id
-  region  = var.region
+  project         = var.test_k8s_app_project_id
+  region          = var.region
+  billing_project = var.test_k8s_app_project_id
 }
 
 # 設定 Kubernetes Provider 連線資訊

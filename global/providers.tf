@@ -10,6 +10,7 @@ terraform {
 
 provider "google" {
   # 關鍵：這裡必須指向 WIF 資源所在的專案，而不是行政專案
-  project = var.jimmy_infra_admin_project_id
-  region  = var.jimmy_infra_admin_region
+  project         = var.jimmy_infra_admin_project_id
+  region          = var.jimmy_infra_admin_region
+  billing_project = var.jimmy_infra_admin_project_id
 }

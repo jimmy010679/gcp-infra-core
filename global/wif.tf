@@ -69,7 +69,9 @@ resource "google_project_service" "admin_base_services" {
     local.base_services,
     local.serverless_services,
     local.gke_services,
-    local.sql_services
+    local.sql_services,
+    local.management_services,
+    local.security_services
   ))
   
   project  = var.jimmy_infra_admin_project_id

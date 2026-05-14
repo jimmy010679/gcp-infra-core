@@ -10,6 +10,7 @@ terraform {
 }
 
 provider "google" {
-  project = var.ai_code_review_project_id
-  region  = var.region
+  project         = var.ai_code_review_project_id
+  region          = var.region
+  billing_project = var.ai_code_review_project_id
 }
