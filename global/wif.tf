@@ -291,6 +291,7 @@ resource "google_project_iam_member" "infra_admin_test_k8s" {
 
     # # Binary Authorization 流水線簽名與驗證權限
     "roles/cloudkms.admin",                     # 允許建立與管理 KMS 金鑰環與金鑰
+    "roles/cloudkms.publicKeyViewer",           # 允許 Terraform data 區塊讀取公鑰內容
     "roles/binaryauthorization.admin",          # 允許建立 Attestor 與配置二進位授權政策
     "roles/containeranalysis.admin",            # 允許建立 Container Analysis Notes
   ])
