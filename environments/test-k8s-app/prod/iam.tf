@@ -14,7 +14,7 @@ resource "google_project_iam_member" "sa_test_k8s_app_roles" {
     "roles/secretmanager.viewer",                 # 允許 CI/CD 查看 Secret 是否存在 (元數據)，但不允許讀取密碼內容
 
     # Binary Authorization 流水線簽名與驗證權限
-    "roles/cloudkms.viewer",                      # 對應指令：gcloud kms keys versions list (抓取最新版本號)
+    "roles/cloudkms.admin",                       # 包含 viewPublicKey，且允許 TF 管理金鑰
     "roles/cloudkms.signer",                      # 對應功能：允許使用 KMS 進行非對稱數位簽名
     "roles/binaryauthorization.attestorsViewer",  # 對應指令：gcloud beta container binauthz attestations create (需要讀取 Attestor 資訊)
     "roles/containeranalysis.notes.attacher",     # 對應功能：允許將剛簽好的證明 (Occurrence) 附加到 Note 上
