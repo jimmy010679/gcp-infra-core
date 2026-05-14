@@ -31,7 +31,7 @@ resource "google_binary_authorization_attestor" "main_attestor" {
       id = data.google_kms_crypto_key_version.latest.id
       pkix_public_key {
         public_key_pem      = data.google_kms_crypto_key_version.latest.public_key[0].pem
-        signature_algorithm = data.google_kms_crypto_key_version.latest.public_key[0].algorithm
+        signature_algorithm = "RSA_PSS_4096_SHA512"
       }
     }
   }
