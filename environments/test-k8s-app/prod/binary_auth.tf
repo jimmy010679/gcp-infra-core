@@ -20,7 +20,7 @@ resource "google_kms_crypto_key" "attestor_key" {
   }
 }
 
-# 3. 建立公證人 (Attestor)
+# 3. 建立 二進位授權 公證人 (Attestor)
 resource "google_binary_authorization_attestor" "main_attestor" {
   name    = "${var.test_k8s_app_app_name}-${var.env}-attestor"
   project = var.test_k8s_app_project_id
@@ -48,11 +48,11 @@ resource "google_container_analysis_note" "attestor_note" {
   }
 }
 
-# 5. 定義二進位授權策略
+# 5. 定義 全局 二進位授權 政策
 resource "google_binary_authorization_policy" "policy" {
   project = var.test_k8s_app_project_id
 
-  # 預設行為：除非有簽名，否則攔截
+  # 預設行為：除非有數位簽名，否則將攔截
   default_admission_rule {
     evaluation_mode  = "REQUIRE_ATTESTATION"
     enforcement_mode = "ENFORCED_BLOCK_AND_AUDIT_LOG"

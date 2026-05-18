@@ -19,6 +19,8 @@ resource "google_project_iam_member" "sa_test_k8s_app_roles" {
     "roles/cloudkms.signer",                      # 允許使用 KMS 進行非對稱數位簽名
     "roles/binaryauthorization.attestorsViewer",  # gcloud beta container binauthz attestations create (需要讀取 Attestor 資訊)
     "roles/containeranalysis.notes.attacher",     # 允許將剛簽好的證明 (Occurrence) 附加到 Note 上
+    "roles/containeranalysis.viewer",             # 允許讀取和列出image的事件元數據
+    "roles/containeranalysis.occurrences.editor", # 允許創建寫入簽名事件紀錄
   ])
   
   project = var.test_k8s_app_project_id

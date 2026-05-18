@@ -16,6 +16,7 @@ resource "google_container_cluster" "primary" {
 
   # 開啟 Binary Authorization 二進位授權強制執行 (避免非授權的image被掛載)
   binary_authorization {
+    # 全局 二進位授權 政策
     evaluation_mode = "PROJECT_SINGLETON_POLICY_ENFORCE"
   }
 

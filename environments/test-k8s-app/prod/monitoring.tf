@@ -26,30 +26,27 @@ resource "google_monitoring_alert_policy" "nat_port_usage_alert" {
 
 
 # nextjs 監控 (Prometheus 生態)
-resource "kubernetes_manifest" "nextjs_pod_monitoring" {
-  # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
-  count = var.enable_k8s_infrastructure ? 1 : 0
-
-  manifest = {
-    apiVersion = "monitoring.googleapis.com/v1"
-    kind       = "PodMonitoring"
-    metadata = {
-      name      = "${var.test_k8s_app_app_name}-frontend-${var.env}-metrics"
-      namespace = var.env
-    }
-    spec = {
-      selector = {
-        matchLabels = {
-          app = "${var.test_k8s_app_app_name}-frontend-${var.env}" # 與 Deployment.yaml Label 一致 (ex: test-k8s-app-frontend-prod)
-        }
-      }
-      endpoints = [
-        {
-          port     = "http"      # 應用程式容器開放的端口名稱 Deployment.yaml ContainerPort Name
-          path     = "/metrics"  # 指標路徑
-          interval = "30s"       # 抓取頻率
-        }
-      ]
-    }
-  }
-}
+# resource "kubernetes_manifest" "nextjs_pod_monitoring" {
+#   manifest = {
+#     apiVersion = "monitoring.googleapis.com/v1"
+#     kind       = "PodMonitoring"
+#     metadata = {
+#       name      = "${var.test_k8s_app_app_name}-frontend-${var.env}-metrics"
+#       namespace = var.env
+#     }
+#     spec = {
+#       selector = {
+#         matchLabels = {
+#           app = "${var.test_k8s_app_app_name}-frontend-${var.env}" # 與 Deployment.yaml Label 一致 (ex: test-k8s-app-frontend-prod)
+#         }
+#       }
+#       endpoints = [
+#         {
+#           port     = "http"      # 應用程式容器開放的端口名稱 Deployment.yaml ContainerPort Name
+#           path     = "/metrics"  # 指標路徑
+#           interval = "30s"       # 抓取頻率
+#         }
+#       ]
+#     }
+#   }
+# }

@@ -110,6 +110,14 @@ resource "kubernetes_namespace_v1" "prod" {
 
   metadata {
     name = var.env 
+
+    # 啟用 K8s 官方最高級別的 Restricted 安全限制
+    labels = {
+      "pod-security.kubernetes.io/enforce"         = "restricted"
+
+      # 從 GKE 集群资源中提取前兩位的版本號碼（例如 v1.35）
+      "pod-security.kubernetes.io/enforce-version" = "v${regex("^[0-9]+\\.[0-9]+", google_container_cluster.primary[0].master_version)}"
+    }
   }
 }
 

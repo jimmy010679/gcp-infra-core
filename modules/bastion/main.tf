@@ -1,6 +1,6 @@
 # 1. 建立跳板機專用的 Service Account
 resource "google_service_account" "bastion_sa" {
-  account_id   = "${var.resource_prefix}-sa"
+  account_id   = "${var.resource_prefix}-bastion-sa"
   display_name = "Bastion Host Service Account"
   project      = var.project_id
 }
