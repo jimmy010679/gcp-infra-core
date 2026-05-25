@@ -2,6 +2,9 @@
 # 建立 Cloud Armor 政策
 # ====================================================================================
 resource "google_compute_security_policy" "waf_policy" {
+  # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
+  count   = var.enable_k8s_infrastructure ? 1 : 0
+
   name    = "${var.test_k8s_app_app_name}-frontend-${var.env}-waf-policy"
   project = var.test_k8s_app_project_id
 

@@ -66,6 +66,7 @@ resource "google_container_cluster" "primary" {
     # Prometheus 生態 (k8s原生)
     # 定期去拉資料
     # 文件: https://docs.cloud.google.com/stackdriver/docs/managed-prometheus/setup-managed?hl=zh-tw#gke-autopilot
+    # 開啟 Google 完全代管的 Google Cloud Managed Service for Prometheus
     managed_prometheus {
       enabled = true # 開啟託管 Prometheus 以採集 /metrics 數據
     }
