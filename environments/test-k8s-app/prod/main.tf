@@ -92,7 +92,7 @@ module "bastion" {
   
   resource_prefix = "${var.test_k8s_app_app_name}-${var.env}"
 
-  depends_on      = [
+  depends_on = [
     module.gke_networking,
     module.data_vpc,
     module.cloud_sql_postgres

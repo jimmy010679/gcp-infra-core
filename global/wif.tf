@@ -61,6 +61,14 @@ locals {
     "binaryauthorization.googleapis.com", # 【准入控制】強制執行二進位授權政策以防禦惡意鏡像部署
     "containeranalysis.googleapis.com"    # 【元數據庫】儲存與管理容器漏洞掃描報告與簽名證明紀錄
   ]
+
+  # =============================================================
+  # 7. VM虛擬機與網路組件 (VM & Network Stack) 
+  # =============================================================
+  vm_services = [
+    "compute.googleapis.com",               # 【計算資源】提供 VM 節點、MIG、Autoscaler 核心功能
+    "secretmanager.googleapis.com"          # 【安全機制】讓 VM 能讀取專案內的密碼
+  ]
 }
 
 # 啟動行政專案 API
@@ -105,11 +113,25 @@ resource "google_project_service" "test_k8s_app_base_services" {
   disable_on_destroy = false
 }
 
+# test-vm-app 啟動應用專案 API
+resource "google_project_service" "test_vm_app_base_services" {
+  # 合併 base 與 vm 清單
+  for_each = toset(concat(
+    local.base_services,
+    local.vm_services
+  ))
+
+  project  = var.test_vm_app_project_id
+  service  = each.key
+  disable_on_destroy = false
+}
+
+
 # ====================================================================================
 # 1. 建立 Workload Identity Pool
 # ====================================================================================
 
-# 建立 ai_reviewer_pool GCP project 的 Pool
+# 建立 GCP project 的 Pool
 resource "google_iam_workload_identity_pool" "new_github_pool" {
   project                   = var.jimmy_infra_admin_project_id # 鎖在infra行政專案
   workload_identity_pool_id = "github-pool-tf" 
@@ -124,7 +146,7 @@ resource "google_iam_workload_identity_pool" "new_github_pool" {
 # 2. 建立 Workload Identity Provider (定義 GitHub 信任關係)
 # ====================================================================================
 
-# 建立 ai_reviewer_pool GCP project 的 Provider
+# 建立 GCP project 的 Provider
 resource "google_iam_workload_identity_pool_provider" "new_github_provider" {
   project                            = var.jimmy_infra_admin_project_id
   workload_identity_pool_id          = google_iam_workload_identity_pool.new_github_pool.workload_identity_pool_id
@@ -178,6 +200,14 @@ resource "google_service_account" "sa_test_k8s_app" {
   depends_on = [google_project_service.admin_base_services]
 }
 
+# 建立 test-vm-app Project 專屬 SA
+resource "google_service_account" "sa_test_vm_app" {
+  project      = var.jimmy_infra_admin_project_id
+  account_id   = "tf-github-test-vm-app"
+  display_name = "SA for Test VM APP Project"
+  depends_on = [google_project_service.admin_base_services]
+}
+
 # ====================================================================================
 # 4. 信任關係
 # ====================================================================================
@@ -209,6 +239,15 @@ resource "google_service_account_iam_member" "binding_test_k8s_app" {
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/test-k8s-app"
 }
 
+# 建立 test-vm-app 綁定 GitHub 信任關係
+resource "google_service_account_iam_member" "binding_test_vm_app" {
+  service_account_id = google_service_account.sa_test_vm_app.name
+  role               = "roles/iam.workloadIdentityUser"
+
+  # 注意後方的 Repo 名稱路徑必須精確匹配
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.new_github_pool.name}/attribute.repository/jimmy010679/test-vm-app"
+}
+
 # ====================================================================================
 # 5. 授予 服務帳號 操作權限
 # ====================================================================================
@@ -218,7 +257,8 @@ resource "google_project_iam_member" "remote_storage_access" {
   for_each = toset([
     google_service_account.sa_gcp_infra_core.email,
     google_service_account.sa_ai_code_review.email,
-    google_service_account.sa_test_k8s_app.email
+    google_service_account.sa_test_k8s_app.email,
+    google_service_account.sa_test_vm_app.email
   ])
   project = var.jimmy_infra_admin_project_id
   role    = "roles/storage.objectAdmin"
@@ -230,7 +270,9 @@ resource "google_project_iam_member" "sa_self_viewer" {
   for_each = toset([
     google_service_account.sa_gcp_infra_core.email,
     google_service_account.sa_ai_code_review.email,
-    google_service_account.sa_test_k8s_app.email
+    google_service_account.sa_test_k8s_app.email,
+    google_service_account.sa_test_vm_app.email
+
   ])
   project = var.jimmy_infra_admin_project_id
   role    = "roles/iam.serviceAccountViewer"
@@ -241,7 +283,8 @@ resource "google_project_iam_member" "sa_self_viewer" {
 resource "google_project_iam_member" "sa_infra_core_cross_project_access" {
   for_each = toset([
     var.ai_code_review_project_id,
-    var.test_k8s_app_project_id
+    var.test_k8s_app_project_id,
+    var.test_vm_app_project_id
   ])
   
   project = each.key
@@ -253,7 +296,8 @@ resource "google_project_iam_member" "sa_infra_core_cross_project_access" {
 resource "google_project_iam_member" "sa_infra_core_cross_project_service_access" {
   for_each = toset([
     var.ai_code_review_project_id,
-    var.test_k8s_app_project_id
+    var.test_k8s_app_project_id,
+    var.test_vm_app_project_id
   ])
   
   project = each.key
@@ -278,7 +322,7 @@ resource "google_project_iam_member" "infra_admin_ai_review" {
 resource "google_project_iam_member" "infra_admin_test_k8s" {
   for_each = toset([
     "roles/artifactregistry.repoAdmin",         # 管理/讀取 GAR 儲存庫
-    "roles/compute.networkAdmin",               # 解決網路 403
+    "roles/compute.networkAdmin",               # 管理 VPC, Subnet (解決網路 403)
     "roles/container.admin",                    # 解決 GKE 403
     "roles/browser",                            # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
     "roles/monitoring.editor",                  # 管理監控資源
@@ -286,7 +330,7 @@ resource "google_project_iam_member" "infra_admin_test_k8s" {
     "roles/servicenetworking.networksAdmin",    # 確保能管理私有服務連線 (PSA)
     "roles/iam.serviceAccountAdmin",            # 讓 Terraform 可以建立、讀取、修改該專案的 SA
     "roles/storage.admin",                      # 管理 GCS 檔案
-    "roles/secretmanager.admin",                # 允許 TF 在專案內建立與讀取密鑰 (解決 Secret 403)
+    "roles/secretmanager.admin",                # 管理 Secret Manager 密碼：允許 TF 在專案內建立與讀取密鑰 (解決 Secret 403)
     "roles/serviceusage.serviceUsageConsumer",  # 允許 TF 消耗 API 額度 (解決 Cloud SQL API disabled 幽靈報錯)
 
     # # Binary Authorization 流水線簽名與驗證權限
@@ -297,6 +341,22 @@ resource "google_project_iam_member" "infra_admin_test_k8s" {
   ])
   
   project = var.test_k8s_app_project_id
+  role    = each.key
+  member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
+}
+
+# [跨專案管理] 授予 Infra SA 對 test-vm-app 的管理權限
+resource "google_project_iam_member" "infra_admin_test_vm" {
+  for_each = toset([
+    "roles/compute.admin",                      # 允許 Terraform 建立與管理 VM, MIG, Autoscaler, Instance Template
+    "roles/compute.networkAdmin",               # 管理 VPC, Subnet
+    "roles/browser",                            # 基礎檢索權：允許 TF 讀取專案資源清單以進行狀態對比
+    "roles/iam.serviceAccountAdmin",            # 讓 Terraform 可以建立 VM 專屬的執行 SA
+    "roles/resourcemanager.projectIamAdmin",    # 讓 Terraform 可以幫 VM 專屬 SA 綁定權限
+    "roles/secretmanager.admin",                # 管理 Secret Manager 密碼
+  ])
+  
+  project = var.test_vm_app_project_id
   role    = each.key
   member  = "serviceAccount:${google_service_account.sa_gcp_infra_core.email}"
 }

@@ -50,6 +50,11 @@ resource "google_compute_router_nat" "nat" {
   enable_dynamic_port_allocation     = true  # 啟用動態埠分配
   min_ports_per_vm                   = 64
   max_ports_per_vm                   = 2048
+
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
+  }
 }
 
 # 建立 全球靜態IP

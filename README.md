@@ -53,7 +53,11 @@ Markdown
 ### 1. **[ai-code-review](https://github.com/jimmy010679/ai-code-review)**
 * **部署**：運行於 **Google Cloud Run** 的 Serverless Next.js 應用。
 
-### 2. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
+### 2. **[test-vm-app](https://github.com/jimmy010679/test-vm-app)**
+* **定位**：使用 VM + Instance Templates 應用範例。
+* **部署**：運行於 **Google Compute Engine** 的 Next.js 應用。
+
+### 3. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
 * **定位**：高可靠、多層隔離的 Kubernetes 應用範例。
 * **部署**：運行於 **Google Kubernetes Engine (GKE)** 叢集。
 
@@ -78,7 +82,6 @@ Markdown
 #### 📊 可觀測性
 實作 **Prometheus** 與 **OpenTelemetry**，自動採集指標 (Metrics) 並整合追蹤 (Tracing)，實現從 Gateway 到資料庫的端到端效能視覺化。
 
-
 ---
 
 ## 📂 專案結構
@@ -86,10 +89,12 @@ Markdown
 ```text
 .
 ├── environments/           # 環境特定配置 (具體項目的實例化)
-│   ├── ai-code-review/     # AI Code Review 項目
+│   ├── ai-code-review/     # (test-cloudrun-app) 項目，代改名
 │   │   └── prod/           # 包含 Cloud Run, Artifact Registry 等無服務器部署配置
 │   └── test-k8s-app/       # 測試用 Kubernetes 項目
-│       └── prod/           # 包含 GKE, Cloud SQL (PSC 連接), Artifact Registry
+│   │   └── prod/           # 包含 GKE, Cloud SQL (PSC 連接), Artifact Registry
+│   └── test-vm-app/        # 測試用 VM 項目
+│       └── prod/           # 包含 VM, Instance Templates
 ├── global/                 # 全局公共資源
 │   └──                     # 包含 Workload Identity Federation (WIF), 跨項目 IAM 權限分配等
 ├── modules/                # 可複用的核心模塊庫

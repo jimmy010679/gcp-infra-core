@@ -92,6 +92,7 @@ jobs:
         path: [
           'environments/ai-code-review/prod', 
           'environments/test-k8s-app/prod'
+           # 'environments/test-vm-app/prod'
         ]
     
     defaults:
