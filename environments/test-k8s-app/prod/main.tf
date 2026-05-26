@@ -1,28 +1,68 @@
 # ====================================================================================
+# 網路規劃地圖 (Network CIDR Allocations)
+# 邏輯：10.[環境(Prod=10, UAT=20, Dev=30)].[專案與用途].[0/24]
+# ====================================================================================
+locals {
+  network_cidrs = {
+    # k8s 網段 (分配 10)
+    k8s_app_subnets = {
+      prod = "10.10.10.0/24"
+      uat  = "10.20.10.0/24"
+      dev  = "10.30.10.0/24"
+    }
+    
+    # 資料庫 網段 (分配 11)
+    data_subnets = {
+      prod = "10.10.11.0/24"
+      uat  = "10.20.11.0/24"
+      dev  = "10.30.11.0/24"
+    }
+
+    # K8s 次要網段 - Pods (分配 100)
+    k8s_pod_ranges = {
+      prod = "10.10.100.0/16"
+      uat  = "10.20.100.0/16"
+      dev  = "10.30.100.0/16"
+    }
+
+    # K8s 次要網段 - Services (分配 101)
+    k8s_service_ranges = {
+      prod = "10.10.101.0/20"
+      uat  = "10.20.101.0/20"
+      dev  = "10.30.101.0/20"
+    }
+  }
+}
+
+
+# ====================================================================================
 # GKE
 # ====================================================================================
 # 調用 gke-networking 模組
 module "gke_networking" {
   # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
-  count           = var.enable_k8s_infrastructure ? 1 : 0
+  count            = var.enable_k8s_infrastructure ? 1 : 0
 
-  source          = "../../../modules/gke-networking"
-  project_id      = var.test_k8s_app_project_id
-  region          = var.region
+  source           = "../../../modules/gke-networking"
+  project_id       = var.test_k8s_app_project_id
+  region           = var.region
 
   # 使用環境變數命名，確保 VPC 獨立
-  vpc_name        = "${var.test_k8s_app_app_name}-${var.env}-app-vpc"
-  subnet_name     = "${var.test_k8s_app_app_name}-${var.env}-app-subnet"
+  vpc_name         = "${var.test_k8s_app_app_name}-${var.env}-app-vpc"
+  subnet_name      = "${var.test_k8s_app_app_name}-${var.env}-app-subnet"
 
   # 每個環境建議分配不同的網段，避免未來做 VPC Peering 時衝突
-  # prod: 10.10.0.0/24, uat: 10.20.0.0/24, dev: 10.30.0.0/24
-  ip_range        = var.env == "prod" ? "10.10.0.0/24" : (var.env == "uat" ? "10.20.0.0/24" : "10.30.0.0/24")
+  ip_range         = local.network_cidrs.k8s_app_subnets[var.env]
+
+  # Pod 和 Service 的次要網段
+  pod_ip_range     = local.network_cidrs.k8s_pod_ranges[var.env]
+  service_ip_range = local.network_cidrs.k8s_service_ranges[var.env]
   
   # 資源命名的前綴，用於區分不同的專案或應用
-  resource_prefix = "${var.test_k8s_app_app_name}-${var.env}"
+  resource_prefix  = "${var.test_k8s_app_app_name}-${var.env}"
 
   # Cloud NAT IP數量 (連外網IP數量)
-  nat_ip_count    = 1
+  nat_ip_count     = 1
 }
 
 # ====================================================================================
@@ -39,7 +79,7 @@ module "data_vpc" {
 
   vpc_name       = "${var.test_k8s_app_app_name}-${var.env}-data-vpc"
   subnet_name    = "${var.test_k8s_app_app_name}-${var.env}-data-subnet"
-  ip_range       = var.env == "prod" ? "10.40.0.0/24" : (var.env == "uat" ? "10.41.0.0/24" : "10.42.0.0/24") # 避開 GKE VPC 網段
+  ip_range       = local.network_cidrs.data_subnets[var.env] # 避開 GKE VPC 網段
 }
 
 # 調用 cloud-sql-postgres 模組 (附加 network_psc.tf)

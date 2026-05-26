@@ -11,8 +11,14 @@ resource "google_container_cluster" "primary" {
   enable_autopilot = true
 
   # 關鍵：引用 Networking 模組的輸出 (因為用了 count 參數，從物件變成陣列)
-  network    = module.gke_networking[0].vpc_name
-  subnetwork = module.gke_networking[0].subnet_name
+  network    = module.gke_networking[0].vpc_id
+  subnetwork = module.gke_networking[0].subnet_id
+
+  # 綁定次要網段
+  ip_allocation_policy {
+    cluster_secondary_range_name  = "${var.test_k8s_app_app_name}-${var.env}-pod-ranges" # 與 subnet 的 range_name 一致
+    services_secondary_range_name = "${var.test_k8s_app_app_name}-${var.env}-service-ranges" # 與 subnet 的 range_name 一致
+  }
 
   # 開啟 Binary Authorization 二進位授權強制執行 (避免非授權的image被掛載)
   binary_authorization {

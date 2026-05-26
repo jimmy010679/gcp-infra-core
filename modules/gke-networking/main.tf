@@ -15,6 +15,18 @@ resource "google_compute_subnetwork" "subnet" {
 
   # 開啟私有 Google 存取，讓沒有公網 IP 的節點也能存取
   private_ip_google_access = true 
+
+  # Pod 的次要網段
+  secondary_ip_range {
+    range_name    = "${var.resource_prefix}-pod-ranges"
+    ip_cidr_range = var.pod_ip_range
+  }
+
+  # Service 的次要網段
+  secondary_ip_range {
+    range_name    =  "${var.resource_prefix}-service-ranges"
+    ip_cidr_range = var.service_ip_range
+  }
 }
 
 # 建立 Cloud Router (為 Cloud NAT 提供邏輯支撐)

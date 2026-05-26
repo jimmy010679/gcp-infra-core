@@ -5,9 +5,9 @@
 resource "google_project_iam_member" "sa_test_vm_app_roles" {
   for_each = toset([
     "roles/compute.instanceAdmin.v1",             # 允許 CI/CD 建立新的 Instance Template 並觸發 MIG 滾動更新
-    "roles/compute.networkUser",                  # 允許新建立的 VM 使用 VPC 與 IP 資源 
+    "roles/compute.networkUser",                  # 允許 新建立的 VM 使用 VPC 與 IP 資源 
     "roles/browser",                              # 方便在 Console 查看資源
-    "roles/storage.objectViewer",                 # 若你的 CI/CD 需要從 GCS 抓取 .env 或代碼包
+    "roles/storage.objectViewer",                 # 允許 CI/CD 需要從 GCS 抓取 .env 或代碼包
     "roles/iam.serviceAccountUser",               # 允許 CI/CD 幫新建立的 Instance Template 掛載 "vm_app_sa" 身分
   ])
   

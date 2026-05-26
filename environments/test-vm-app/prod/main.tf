@@ -1,4 +1,21 @@
 # ====================================================================================
+# 網路規劃地圖 (Network CIDR Allocations)
+# 邏輯：10.[環境(Prod=10, UAT=20, Dev=30)].[專案(VM=20,21)].[0/24]
+# ====================================================================================
+locals {
+  network_cidrs = {
+    # VM 主網段 (分配 20)
+    vm_app_subnets = {
+      prod = "10.10.20.0/24"
+      uat  = "10.20.20.0/24"
+      dev  = "10.30.20.0/24"
+    }
+    
+    # 資料庫 網段 (分配 21) ...
+  }
+}
+
+# ====================================================================================
 # 1. 定義 VM 藍圖 (Instance Template)
 # ====================================================================================
 resource "google_compute_instance_template" "vm_template" {
@@ -101,7 +118,7 @@ resource "google_compute_region_autoscaler" "autoscaler" {
 
   autoscaling_policy {
     max_replicas    = 5  # 最多長到 5 台
-    min_replicas    = 2  # 最少維持 2 台防災
+    min_replicas    = 2  # 最少維持 2 台
     cooldown_period = 90 # 擴展後冷卻 90 秒
 
     cpu_utilization {

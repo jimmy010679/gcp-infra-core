@@ -34,3 +34,13 @@ variable "nat_ip_count" {
   type        = number
   default     = 1
 }
+
+variable "pod_ip_range" {
+  description = "給 GKE Pod 使用的次要網段 (例如 /16 或 /20)"
+  type        = string
+}
+
+variable "service_ip_range" {
+  description = "給 GKE Service 使用的次要網段 (例如 /20 或 /22)"
+  type        = string
+}

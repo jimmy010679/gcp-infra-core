@@ -18,7 +18,7 @@ resource "google_compute_subnetwork" "subnet" {
   count                    = var.enable_vm_infrastructure ? 1 : 0
   
   name                     = "${var.test_vm_app_app_name}-${var.env}-app-subnet"
-  ip_cidr_range            = "10.10.0.0/24" # 給 VM 使用的內網 IP 範圍
+  ip_cidr_range            = local.network_cidrs.vm_app_subnets[var.env] # VM 使用的內網 IP 範圍
   region                   = var.region
   
   # 動態引用上面建立的 VPC

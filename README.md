@@ -59,7 +59,7 @@ Markdown
 
 ### 3. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
 * **定位**：高可靠、多層隔離的 Kubernetes 應用範例。
-* **部署**：運行於 **Google Kubernetes Engine (GKE)** 叢集。
+* **部署**：運行於 **Google Kubernetes Engine (GKE)** 叢集的 Next.js 應用。
 
 #### 🌐 深度網路架構 (Networking)
 採用雙 VPC 物理隔離設計，確保「應用服務」與「數據存儲」徹底拆分：
@@ -81,6 +81,44 @@ Markdown
 
 #### 📊 可觀測性
 實作 **Prometheus** 與 **OpenTelemetry**，自動採集指標 (Metrics) 並整合追蹤 (Tracing)，實現從 Gateway 到資料庫的端到端效能視覺化。
+
+---
+
+## 🗺️ 全域網段規劃 (Global IP Allocation Strategy)
+
+本專案採用企業級 **區段保留法 (Block Allocation)** 進行 IP CIDR 規劃，確保各專案、各環境的網路 (VPC) 之間絕對不會發生 IP 衝突 (Overlapping)，並為未來的跨專案互連 (VPC Peering) 與地端連線打下堅實基礎。
+
+### 📐 命名規範公式
+`10.[環境Env].[專案與用途Project].[0/24]`
+
+* **第 2 碼 (環境)**：`10` = Prod, `20` = UAT, `30` = Dev
+* **第 3 碼 (專案與用途)**：
+    * `10-19`：保留給 `test-k8s-app` (GKE 微服務生態系)
+    * `20-29`：保留給 `test-vm-app` (傳統虛擬機生態系)
+    * `100+`：K8s 專屬次要網段 (Pod & Service)
+
+### 📊 網段配置對照表
+
+#### 1. test-vm-app (VM 專案)
+VM 架構一台虛擬機對應一個內網 IP。
+
+| 部署環境 | 資源類型 (用途) | 網段配置 (CIDR) | 說明 |
+| :--- | :--- | :--- | :--- |
+| **Prod (10)** | VM Subnet (MIG) | `10.10.20.0/24` | 應用程式負載平衡群組 |
+| **UAT (20)** | VM Subnet (MIG) | `10.20.20.0/24` | 測試環境虛擬機 |
+| **Dev (30)** | VM Subnet (MIG) | `10.30.20.0/24` | 開發環境虛擬機 |
+
+#### 2. test-k8s-app (Kubernetes 專案)
+GKE 採用 `VPC_NATIVE` 模式，將實體節點與虛擬容器的網段嚴格拆分，便於流量追蹤與防火牆管控。
+
+| 部署環境 | 資源類型 (用途) | 網段配置 (CIDR) | 說明 |
+| :--- | :--- | :--- | :--- |
+| **Prod (10)** | GKE Node (App VPC) | `10.10.10.0/24` | 節點實體 IP (約 252 台) |
+| **Prod (10)** | Data VPC (Cloud SQL) | `10.10.11.0/24` | 資料庫隔離專用網段 |
+| **Prod (10)** | **GKE Pod** (Secondary) | `10.10.100.0/16` | 容器動態 IP，極大擴充性 |
+| **Prod (10)** | **GKE Service** (Secondary) | `10.10.101.0/20` | 服務發現虛擬 IP |
+| **UAT (20)** | GKE Node (App VPC) | `10.20.10.0/24` | 測試環境節點 |
+| **Dev (30)** | GKE Node (App VPC) | `10.30.10.0/24` | 開發環境節點 |
 
 ---
 
