@@ -50,14 +50,7 @@
 Markdown
 ## 💻 旗下應用程式專案
 
-### 1. **[ai-code-review](https://github.com/jimmy010679/ai-code-review)**
-* **部署**：運行於 **Google Cloud Run** 的 Serverless Next.js 應用。
-
-### 2. **[test-vm-app](https://github.com/jimmy010679/test-vm-app)**
-* **定位**：使用 VM + Instance Templates 應用範例。
-* **部署**：運行於 **Google Compute Engine** 的 Next.js 應用。
-
-### 3. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
+### 1. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
 * **定位**：高可靠、多層隔離的 Kubernetes 應用範例。
 * **部署**：運行於 **Google Kubernetes Engine (GKE)** 叢集的 Next.js 應用。
 
@@ -82,43 +75,66 @@ Markdown
 #### 📊 可觀測性
 實作 **Prometheus** 與 **OpenTelemetry**，自動採集指標 (Metrics) 並整合追蹤 (Tracing)，實現從 Gateway 到資料庫的端到端效能視覺化。
 
+### 2. **[test-vm-app](https://github.com/jimmy010679/test-vm-app)**
+* **定位**：使用 VM + Instance Templates 應用範例。
+* **部署**：運行於 **Google Compute Engine** 的 Node.js 應用。
+
+### 3. **[ai-code-review(test-cloudrun-app)](https://github.com/jimmy010679/ai-code-review)**
+* **部署**：運行於 **Google Cloud Run** 的 Serverless Next.js 應用。
+
 ---
 
 ## 🗺️ 全域網段規劃 (Global IP Allocation Strategy)
 
-本專案採用企業級 **區段保留法 (Block Allocation)** 進行 IP CIDR 規劃，確保各專案、各環境的網路 (VPC) 之間絕對不會發生 IP 衝突 (Overlapping)，並為未來的跨專案互連 (VPC Peering) 與地端連線打下堅實基礎。
+本專案採用 **以專案為核心的區段保留法 (Project-Based Block Allocation)** 進行 IP CIDR 規劃。此架構不僅確保各專案、各環境的網路 (VPC) 之間絕對不會發生 IP 衝突 (Zero Overlap)，更能無痛支援未來跨部門的微服務互連 (VPC Peering) 與技術堆疊轉換。
 
-### 📐 命名規範公式
-`10.[環境Env].[專案與用途Project].[0/24]`
+### 📐 核心命名公式
+
+將網路劃分為「實體機網段」與「容器虛擬網段」兩個維度：
+
+1. **實體網路 (VM, Node, Database)**
+   👉 `10.[環境(10,20,30)].[專案 Base ID (0~99)].0/24`
+2. **K8s 容器網路 (Pod, Service)**
+   👉 `10.[100+環境(110,120,130)].[專案 Base ID (0~99)].0/16` 
 
 * **第 2 碼 (環境)**：`10` = Prod, `20` = UAT, `30` = Dev
-* **第 3 碼 (專案與用途)**：
-    * `10-19`：保留給 `test-k8s-app` (GKE 微服務生態系)
-    * `20-29`：保留給 `test-vm-app` (傳統虛擬機生態系)
-    * `100+`：K8s 專屬次要網段 (Pod & Service)
+* **第 3 碼 (專案 Base ID)**：
+    * 每個專案固定分配一個包含 4 個子網的區塊（例如：Project A 拿 0~3，Project B 拿 4~7）。
+    * `0~3`：分配給 **test-k8s-app** 專案
+    * `20~23`：分配給 **test-vm-app** 專案
+
+---
 
 ### 📊 網段配置對照表
 
-#### 1. test-vm-app (VM 專案)
-VM 架構一台虛擬機對應一個內網 IP。
+#### 1. test-k8s-app (Kubernetes 架構)
+Base ID 分配為 `0`。GKE 採用 `VPC_NATIVE` 模式，將實體節點與虛擬容器的網段嚴格拆分，便於流量追蹤與防火牆管控。
 
-| 部署環境 | 資源類型 (用途) | 網段配置 (CIDR) | 說明 |
+| 部署環境 | 資源類型 (用途) | 網段配置 (CIDR) | 說明 / 識別特徵 |
 | :--- | :--- | :--- | :--- |
-| **Prod (10)** | VM Subnet (MIG) | `10.10.20.0/24` | 應用程式負載平衡群組 |
+| **Prod (10)** | GKE Node (App VPC) | `10.10.0.0/24` | 節點實體 IP (Base+0) |
+| **Prod (10)** | Data VPC (Cloud SQL) | `10.10.1.0/24` | 資料庫專用網段 (Base+1) |
+| **Prod (10)** | **GKE Pod** (Secondary) | `10.110.0.0/18` | 容器動態 IP (可容納 ~1.6 萬個 Pod) |
+| **Prod (10)** | **GKE Service** (Secondary) | `10.111.0.0/20` | 服務發現虛擬 IP (可容納 ~4 千個 Service) |
+| **UAT (20)** | GKE Node (App VPC) | `10.20.0.0/24` | 測試環境節點 |
+| **UAT (20)** | Data VPC (Cloud SQL) | `10.20.1.0/24` | 測試環境資料庫 |
+| **UAT (20)** | **GKE Pod** (Secondary) | `10.120.0.0/18` | 測試環境 Pod |
+| **UAT (20)** | **GKE Service** (Secondary) | `10.121.0.0/20` | 測試環境 Service |
+| **Dev (30)** | GKE Node (App VPC) | `10.30.0.0/24` | 開發環境節點 |
+| **Dev (30)** | Data VPC (Cloud SQL) | `10.30.1.0/24` | 開發環境資料庫 |
+| **Dev (30)** | **GKE Pod** (Secondary) | `10.130.0.0/18` | 開發環境 Pod |
+| **Dev (30)** | **GKE Service** (Secondary) | `10.131.0.0/20` | 開發環境 Service |
+
+
+#### 2. test-vm-app (傳統 VM 架構)
+Base ID 分配為 `20`。架構較為單純，採用直接映射。
+
+| 部署環境 | 資源類型 (用途) | 網段配置 (CIDR) | 說明 / 識別特徵 |
+| :--- | :--- | :--- | :--- |
+| **Prod (10)** | VM Subnet (MIG) | `10.10.20.0/24` | 應用程式負載平衡群組 (Base+0) |
+| **Prod (10)** | Data VPC (保留) | `10.10.21.0/24` | 保留給未來擴充專屬資料庫 (Base+1) |
 | **UAT (20)** | VM Subnet (MIG) | `10.20.20.0/24` | 測試環境虛擬機 |
 | **Dev (30)** | VM Subnet (MIG) | `10.30.20.0/24` | 開發環境虛擬機 |
-
-#### 2. test-k8s-app (Kubernetes 專案)
-GKE 採用 `VPC_NATIVE` 模式，將實體節點與虛擬容器的網段嚴格拆分，便於流量追蹤與防火牆管控。
-
-| 部署環境 | 資源類型 (用途) | 網段配置 (CIDR) | 說明 |
-| :--- | :--- | :--- | :--- |
-| **Prod (10)** | GKE Node (App VPC) | `10.10.10.0/24` | 節點實體 IP (約 252 台) |
-| **Prod (10)** | Data VPC (Cloud SQL) | `10.10.11.0/24` | 資料庫隔離專用網段 |
-| **Prod (10)** | **GKE Pod** (Secondary) | `10.10.100.0/16` | 容器動態 IP，極大擴充性 |
-| **Prod (10)** | **GKE Service** (Secondary) | `10.10.101.0/20` | 服務發現虛擬 IP |
-| **UAT (20)** | GKE Node (App VPC) | `10.20.10.0/24` | 測試環境節點 |
-| **Dev (30)** | GKE Node (App VPC) | `10.30.10.0/24` | 開發環境節點 |
 
 ---
 

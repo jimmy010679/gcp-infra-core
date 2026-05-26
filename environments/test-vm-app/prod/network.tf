@@ -83,3 +83,47 @@ resource "google_compute_router_nat" "nat" {
     filter = "ERRORS_ONLY"
   }
 }
+
+# ====================================================================================
+# 6. 建立防火牆規則：允許 Load Balancer 存取 TCP 3000 prot
+# ====================================================================================
+resource "google_compute_firewall" "allow_health_check_and_lb" {
+  # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
+  count   = var.enable_vm_infrastructure ? 1 : 0
+
+  name    = "${var.test_vm_app_app_name}-${var.env}-allow-hc-lb"
+  network = google_compute_network.vpc[0].name
+  project = var.test_vm_app_project_id
+
+  # 允許來自 LB 和 Health Check 的流量
+  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["3000"]
+  }
+
+  target_service_accounts = [google_service_account.vm_app_sa.email]
+}
+
+# ====================================================================================
+# 7. 建立防火牆規則：允許 IAP 存取 SSH
+# ====================================================================================
+resource "google_compute_firewall" "allow_iap_ssh" {
+  # 參數控制開啟或關閉 (練習省錢)，當開關開啟時建立 1 個，關閉時建立 0 個
+  count   = var.enable_vm_infrastructure ? 1 : 0
+
+  name    = "${var.test_vm_app_app_name}-${var.env}-allow-iap-ssh"
+  network = google_compute_network.vpc[0].name
+  project = var.test_vm_app_project_id
+
+  # IAP 的固定網段 (GCP SSH, gcloud ssh)
+  source_ranges = ["35.235.240.0/20"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  target_service_accounts = [google_service_account.vm_app_sa.email]
+}
