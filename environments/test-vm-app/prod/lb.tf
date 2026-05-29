@@ -138,4 +138,7 @@ resource "google_compute_backend_service" "vm_backend" {
     balancing_mode  = "UTILIZATION" # 根據 CPU 使用率分配流量
     capacity_scaler = 1.0
   }
+ 
+  # 掛載 Cloud Armor
+  # security_policy = google_compute_security_policy.waf_policy.id
 }

@@ -64,13 +64,17 @@ resource "google_container_cluster" "primary" {
     ]
 
     # Network Observability
+    # 範圍: GCP 原生網路監控（基礎設施層）
+    # 監控維度：網路流量與拓撲 (L4/L7 Network)
     advanced_datapath_observability_config {
-      enable_metrics = true
-      enable_relay   = true
+      enable_metrics = true # 開啟網路指標採集
+      enable_relay   = true # 開啟 Hubble Relay 轉發服務
     }
     
     # Prometheus 生態 (k8s原生)
-    # 定期去拉資料
+    # 範圍: 應用與系統指標層
+    # 監控維度：計數指標 (Metrics)
+    # 方法: 定期去拉資料
     # 文件: https://docs.cloud.google.com/stackdriver/docs/managed-prometheus/setup-managed?hl=zh-tw#gke-autopilot
     # 開啟 Google 完全代管的 Google Cloud Managed Service for Prometheus
     managed_prometheus {
@@ -78,16 +82,20 @@ resource "google_container_cluster" "primary" {
     }
 
     # OpenTelemetry 生態
-    # 定期去推資料
-    # 開啟 Google 完全代管的 OpenTelemetry Collector
-    # 由於是beta階段，暫且不用 terrafrom 控制，並用 lifecycle 搭配
-    # 文件: https://docs.cloud.google.com/kubernetes-engine/docs/concepts/managed-otel-gke?hl=zh-tw
+    # 範圍: 分散式鏈路追蹤層
+    # 監控維度：分散式鏈路追蹤 (Distributed Tracing)
+    # 方法: 定期去推資料
     # 
-    # 指令開啟
-    # gcloud beta container clusters update test-k8s-app-prod-cluster \
-    #   --project=test-k8s-app-492717 \
-    #   --managed-otel-scope=COLLECTION_AND_INSTRUMENTATION_COMPONENTS \
-    #   --location=asia-east1
+    # 備註:
+    #   開啟 Google 完全代管的 OpenTelemetry Collector
+    #   由於是beta階段，暫且不用 terrafrom 控制，並用 lifecycle 搭配
+    #   文件: https://docs.cloud.google.com/kubernetes-engine/docs/concepts/managed-otel-gke?hl=zh-tw
+    # 
+    # 指令開啟:
+    #   gcloud beta container clusters update test-k8s-app-prod-cluster \
+    #     --project=test-k8s-app-492717 \
+    #     --managed-otel-scope=COLLECTION_AND_INSTRUMENTATION_COMPONENTS \
+    #     --location=asia-east1
     # 
     # 開啟 Google 完全代管的 OpenTelemetry Collector
     # managed_opentelemetry_config {

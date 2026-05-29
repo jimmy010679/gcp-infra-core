@@ -45,9 +45,6 @@
 
 ---
 
-這是我為你整理好的 Markdown 語法。這份排版特別強化了 test-k8s-app 的技術深度，將網路、安全與可觀測性三大亮點分層呈現，非常適合放在 GitHub README.md 中展示你的架構能力。
-
-Markdown
 ## 💻 旗下應用程式專案
 
 ### 1. **[test-k8s-app](https://github.com/jimmy010679/test-k8s-app)**
@@ -75,8 +72,11 @@ Markdown
 #### 📊 可觀測性
 實作 **Prometheus** 與 **OpenTelemetry**，自動採集指標 (Metrics) 並整合追蹤 (Tracing)，實現從 Gateway 到資料庫的端到端效能視覺化。
 
+#### 🗺️ 專案架構圖
+![專案架構圖](docs/images/test-k8s-app-architecture.png)
+
 ### 2. **[test-vm-app](https://github.com/jimmy010679/test-vm-app)**
-* **定位**：使用 VM + Instance Templates 應用範例。
+* **定位**：使用 VM + Instance Templates + Managed Instance Group 應用範例。
 * **部署**：運行於 **Google Compute Engine** 的 Node.js 應用。
 
 ### 3. **[ai-code-review(test-cloudrun-app)](https://github.com/jimmy010679/ai-code-review)**
