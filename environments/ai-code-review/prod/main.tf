@@ -19,6 +19,13 @@ resource "google_cloud_run_v2_service" "hello_service" {
   ingress = "INGRESS_TRAFFIC_ALL"
 
   template {
+    # --- 新增這段標籤來測試 Pipeline ---
+    labels = {
+      "test-pipeline" = "true"
+      "managed-by"    = "terraform"
+    }
+    # ------------------------------
+    
     containers {
       # 初始先用 hello，等一下由 GitHub Actions 推送真正的 Image
       image = "us-docker.pkg.dev/cloudrun/container/hello"
